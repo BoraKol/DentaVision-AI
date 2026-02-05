@@ -3,7 +3,7 @@ import { Upload, X, Trash2, Image as ImageIcon, ZoomIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
-import { photosAPI } from '../infrastructure/services/ApiService';
+import { photosAPI } from '../../infrastructure/services/ApiService';
 import DeleteConfirmationModal from './common/DeleteConfirmationModal';
 
 interface Photo {

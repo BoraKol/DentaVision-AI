@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, TestTube, Clock, CheckCircle, Truck, AlertCircle, Calendar, Trash2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import ConfirmModal from './common/ConfirmModal';
-import { labJobsAPI } from '../infrastructure/services/ApiService';
+import { labJobsAPI } from '../../infrastructure/services/ApiService';
 
 interface LabJob {
     _id: string;
