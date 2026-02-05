@@ -137,11 +137,16 @@ export const labJobsAPI = {
 
 // Photos API
 export const photosAPI = {
-    getAllByPatient: (patientId: string) => api.get(`/photos/${patientId}`),
-    upload: (patientId: string, formData: FormData) =>
-        api.post(`/photos/upload/${patientId}`, formData, {
+    getAllByPatient: (patientId: string) => api.get(`/photos/patient/${patientId}`),
+    upload: (patientId: string, formData: FormData) => {
+        // Ensure patientId is in the formData
+        if (!formData.has('patientId')) {
+            formData.append('patientId', patientId);
+        }
+        return api.post('/photos', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
-        }),
+        });
+    },
     delete: (id: string) => api.delete(`/photos/${id}`)
 };
 
