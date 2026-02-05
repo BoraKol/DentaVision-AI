@@ -119,4 +119,30 @@ export const financialsAPI = {
     getStats: () => api.get('/financials/stats')
 };
 
+// Inventory API
+export const inventoryAPI = {
+    getAll: () => api.get('/inventory'),
+    create: (data: any) => api.post('/inventory', data),
+    update: (id: string, data: any) => api.put(`/inventory/${id}`, data),
+    delete: (id: string) => api.delete(`/inventory/${id}`)
+};
+
+// Lab Tracking API
+export const labJobsAPI = {
+    getAll: () => api.get('/lab-jobs'),
+    create: (data: any) => api.post('/lab-jobs', data),
+    update: (id: string, data: any) => api.put(`/lab-jobs/${id}`, data),
+    delete: (id: string) => api.delete(`/lab-jobs/${id}`)
+};
+
+// Photos API
+export const photosAPI = {
+    getAllByPatient: (patientId: string) => api.get(`/photos/${patientId}`),
+    upload: (patientId: string, formData: FormData) =>
+        api.post(`/photos/upload/${patientId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }),
+    delete: (id: string) => api.delete(`/photos/${id}`)
+};
+
 export default api;

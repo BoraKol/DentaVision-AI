@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import { useUser } from './UserContext';
 import { useToast } from './ToastContext';
+import { inventoryAPI } from '../../infrastructure/services/ApiService';
 
 export interface InventoryItem {
     _id: string;
@@ -36,7 +36,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const fetchItems = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/inventory');
+            const res = await inventoryAPI.getAll();
             if (res.data.success) {
                 setItems(res.data.data);
             }
@@ -50,7 +50,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const addItem = async (itemData: Omit<InventoryItem, '_id' | 'lastRestocked'>) => {
         try {
-            const res = await axios.post('http://localhost:3000/api/inventory', itemData);
+            const res = await inventoryAPI.create(itemData);
             if (res.data.success) {
                 setItems([...items, res.data.data]);
                 addToast('Ürün eklendi', 'success');
@@ -63,7 +63,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const updateItem = async (id: string, itemData: Partial<InventoryItem>) => {
         try {
-            const res = await axios.put(`http://localhost:3000/api/inventory/${id}`, itemData);
+            const res = await inventoryAPI.update(id, itemData);
             if (res.data.success) {
                 setItems(items.map(item => item._id === id ? res.data.data : item));
                 addToast('Ürün güncellendi', 'success');
@@ -76,7 +76,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const deleteItem = async (id: string) => {
         try {
-            const res = await axios.delete(`http://localhost:3000/api/inventory/${id}`);
+            const res = await inventoryAPI.delete(id);
             if (res.data.success) {
                 setItems(items.filter(item => item._id !== id));
                 addToast('Ürün silindi', 'success');

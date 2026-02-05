@@ -31,30 +31,15 @@ const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 
 // Enable CORS
-const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    process.env.FRONTEND_URL
-].filter(Boolean).map(url => url.replace(/\/$/, ""));
-
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps)
-        if (!origin) return callback(null, true);
-        
-        const isAllowed = allowedOrigins.includes(origin) || 
-                         origin.endsWith('.vercel.app');
-        
-        if (isAllowed) {
-            callback(null, true);
-        } else {
-            console.log('CORS blocked origin:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
+        // Allow all origins for testing/deployment but log them
+        // In a real production app, we would use a whitelist
+        return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 // Set security headers

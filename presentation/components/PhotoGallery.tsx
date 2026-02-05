@@ -3,7 +3,7 @@ import { Upload, X, Trash2, Image as ImageIcon, ZoomIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
-import api from '../../infrastructure/services/ApiService';
+import { photosAPI } from '../infrastructure/services/ApiService';
 import DeleteConfirmationModal from './common/DeleteConfirmationModal';
 
 interface Photo {
@@ -25,11 +25,11 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
     const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [photoToDelete, setPhotoToDelete] = useState<string | null>(null);
-    const { token } = useAuth();
     const { addToast } = useToast();
-    const { t } = useLanguage();
 
-    const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+    // Use the base URL for images from environment or fallback
+    const API_URL = import.meta.env.VITE_API_URL || 'https://dentavision-backend.onrender.com/api';
+    const IMAGE_BASE_URL = API_URL.replace('/api', '');
 
     useEffect(() => {
         fetchPhotos();
@@ -37,8 +37,10 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
 
     const fetchPhotos = async () => {
         try {
-            const response = await api.get(`/photos/patient/${patientId}`);
-            setPhotos(response.data);
+            const response = await photosAPI.getAllByPatient(patientId);
+            if (response.data.success || Array.isArray(response.data)) {
+                setPhotos(Array.isArray(response.data) ? response.data : response.data.data);
+            }
         } catch (error) {
             console.error('Error fetching photos:', error);
             addToast('Fotoğraflar yüklenirken hata oluştu', 'error');
@@ -51,16 +53,11 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
 
         const formData = new FormData();
         formData.append('image', file);
-        formData.append('patientId', patientId);
         formData.append('type', selectedType === 'all' ? 'other' : selectedType);
 
         setUploading(true);
         try {
-            await api.post('/photos', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            await photosAPI.upload(patientId, formData);
             addToast('Fotoğraf başarıyla yüklendi', 'success');
             fetchPhotos();
         } catch (error) {
@@ -75,7 +72,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
         if (!photoToDelete) return;
 
         try {
-            await api.delete(`/photos/${photoToDelete}`);
+            await photosAPI.delete(photoToDelete);
             setPhotos(photos.filter(p => p._id !== photoToDelete));
             addToast('Fotoğraf silindi', 'info');
             if (selectedPhoto?._id === photoToDelete) setSelectedPhoto(null);
@@ -97,15 +94,14 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
 
     return (
         <div className="space-y-6">
-            {/* Header / Controls */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+                <div className="flex bg-slate-100 p-1 rounded-lg overflow-x-auto max-w-full">
                     {['all', 'intraoral', 'extraoral', 'xray'].map(type => (
                         <button
                             key={type}
                             onClick={() => setSelectedType(type)}
-                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${selectedType === type
-                                ? 'bg-white text-teal-600 shadow-sm'
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${selectedType === type
+                                ? 'bg-white text-indigo-600 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
@@ -114,7 +110,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
                     ))}
                 </div>
 
-                <label className={`flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg cursor-pointer hover:bg-teal-700 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <label className={`flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <Upload className="w-4 h-4" />
                     <span>{uploading ? 'Yükleniyor...' : 'Fotoğraf Yükle'}</span>
                     <input
@@ -127,7 +123,6 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
                 </label>
             </div>
 
-            {/* Gallery Grid */}
             {filteredPhotos.length === 0 ? (
                 <div className="text-center py-20 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
                     <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
@@ -138,11 +133,11 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
                     {filteredPhotos.map(photo => (
                         <div
                             key={photo._id}
-                            className="group relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 cursor-pointer"
+                            className="group relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shadow-sm"
                             onClick={() => setSelectedPhoto(photo)}
                         >
                             <img
-                                src={`${BASE_URL}${photo.url}`}
+                                src={`${IMAGE_BASE_URL}${photo.url}`}
                                 alt="Patient photo"
                                 className="w-full h-full object-cover transition-transform group-hover:scale-105"
                             />
@@ -167,7 +162,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
-                            <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded backdrop-blur-sm">
+                            <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-[10px] rounded backdrop-blur-sm uppercase font-bold tracking-wider">
                                 {new Date(photo.createdAt).toLocaleDateString()}
                             </div>
                         </div>
@@ -175,23 +170,22 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({ patientId }) => {
                 </div>
             )}
 
-            {/* Lightbox Modal */}
             {selectedPhoto && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4" onClick={() => setSelectedPhoto(null)}>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-4" onClick={() => setSelectedPhoto(null)}>
                     <button
-                        className="absolute top-4 right-4 p-2 text-white/70 hover:text-white"
+                        className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
                         onClick={() => setSelectedPhoto(null)}
                     >
                         <X className="w-8 h-8" />
                     </button>
                     <img
-                        src={`${BASE_URL}${selectedPhoto.url}`}
+                        src={`${IMAGE_BASE_URL}${selectedPhoto.url}`}
                         alt="Full size"
-                        className="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
+                        className="max-w-full max-h-[90vh] rounded-xl shadow-2xl animate-in zoom-in duration-200"
                         onClick={(e) => e.stopPropagation()}
                     />
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
-                        {new Date(selectedPhoto.createdAt).toLocaleString()} • {selectedPhoto.type}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/90 text-xs font-bold uppercase tracking-widest bg-white/10 px-6 py-2 rounded-full backdrop-blur-md border border-white/10">
+                        {new Date(selectedPhoto.createdAt).toLocaleDateString()} • {selectedPhoto.type}
                     </div>
                 </div>
             )}
