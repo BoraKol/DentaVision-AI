@@ -1,0 +1,5 @@
+{
+  "name": "DentaVision AI",
+  "description": "A Clinical Decision Support System (CDSS) for dental practitioners featuring patient risk profiling, radiographic interpretation, and treatment planning assistance.",
+  "requestFramePermissions": []
+}

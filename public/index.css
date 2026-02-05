@@ -1,0 +1,160 @@
+/* DentaVision AI - Global Styles */
+
+:root {
+    /* Light Theme */
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --border-hover: #cbd5e1;
+    --accent: #0d9488;
+    --accent-hover: #0f766e;
+    --accent-light: #ccfbf1;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+}
+
+.dark {
+    /* Dark Theme */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --border-hover: #475569;
+    --accent: #2dd4bf;
+    --accent-hover: #5eead4;
+    --accent-light: #134e4a;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --error: #f87171;
+    --info: #60a5fa;
+}
+
+/* Base Styles */
+body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Dark mode overrides for common elements */
+.dark .bg-white {
+    background-color: var(--bg-secondary);
+}
+
+.dark .bg-slate-50 {
+    background-color: var(--bg-primary);
+}
+
+.dark .bg-slate-100 {
+    background-color: var(--bg-tertiary);
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+    color: var(--text-primary);
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500 {
+    color: var(--text-secondary);
+}
+
+.dark .text-slate-400 {
+    color: var(--text-muted);
+}
+
+.dark .border-slate-200,
+.dark .border-slate-100 {
+    border-color: var(--border-color);
+}
+
+.dark .hover\:bg-slate-100:hover {
+    background-color: var(--bg-tertiary);
+}
+
+/* Dark mode for specific components */
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+    border-color: var(--accent);
+    outline-color: var(--accent);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: var(--text-muted);
+}
+
+/* Teal accent adjustments for dark mode */
+.dark .bg-teal-600 {
+    background-color: var(--accent);
+}
+
+.dark .hover\:bg-teal-700:hover {
+    background-color: var(--accent-hover);
+}
+
+.dark .text-teal-700,
+.dark .text-teal-600 {
+    color: var(--accent);
+}
+
+.dark .bg-teal-50 {
+    background-color: var(--accent-light);
+}
+
+.dark .border-teal-500 {
+    border-color: var(--accent);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-hover);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Animation for theme transition */
+* {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+/* Disable transitions on page load */
+.no-transition * {
+    transition: none !important;
+}
