@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const patientSchema = new mongoose.Schema({
     userId: {
@@ -48,6 +49,15 @@ const patientSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    password: {
+        type: String,
+        select: false
+    },
+    portalAccessKey: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     analyses: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Analysis'
@@ -58,6 +68,28 @@ const patientSchema = new mongoose.Schema({
     }
 }, {
     timestamps: true
+});
+
+// Encrypt password using bcrypt
+patientSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        next();
+    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Match user entered password to hashed password in database
+patientSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Generate Portal Access Key if not exists
+patientSchema.pre('save', function (next) {
+    if (!this.portalAccessKey) {
+        this.portalAccessKey = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+    next();
 });
 
 // Index for faster queries

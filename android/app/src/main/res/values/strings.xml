@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DentaVisionAI</string>
+    <string name="title_activity_main">DentaVisionAI</string>
+    <string name="package_name">com.dentavision.app</string>
+    <string name="custom_url_scheme">com.dentavision.app</string>
+</resources>

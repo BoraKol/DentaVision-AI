@@ -20,11 +20,17 @@ class PatientService {
     }
 
     async updatePatient(id, clinicName, data) {
-        return await Patient.findOneAndUpdate(
-            { _id: id, clinicName },
-            data,
-            { new: true, runValidators: true }
-        );
+        const patient = await Patient.findOne({ _id: id, clinicName });
+        if (!patient) {
+            return null;
+        }
+
+        // Update fields individually to support mongoose middleware (e.g. password hashing)
+        Object.keys(data).forEach(key => {
+            patient[key] = data[key];
+        });
+
+        return await patient.save();
     }
 
     async deletePatient(id, userId) {

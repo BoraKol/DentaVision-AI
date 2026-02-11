@@ -63,6 +63,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             onLoginSuccess();
         } catch (err: any) {
             setError(err.message);
+            // Debug for Android
+            if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+                alert(`Debug Error:\nURL: ${import.meta.env.VITE_API_URL || 'FALLBACK_URL'}\nMessage: ${err.message}\nStack: ${err.stack}`);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -87,8 +91,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         <button
                             onClick={() => setIsLogin(true)}
                             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${isLogin
-                                    ? 'bg-white text-teal-600 shadow'
-                                    : 'text-slate-600 hover:text-slate-800'
+                                ? 'bg-white text-teal-600 shadow'
+                                : 'text-slate-600 hover:text-slate-800'
                                 }`}
                         >
                             {labels.login}
@@ -96,8 +100,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         <button
                             onClick={() => setIsLogin(false)}
                             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${!isLogin
-                                    ? 'bg-white text-teal-600 shadow'
-                                    : 'text-slate-600 hover:text-slate-800'
+                                ? 'bg-white text-teal-600 shadow'
+                                : 'text-slate-600 hover:text-slate-800'
                                 }`}
                         >
                             {labels.register}
@@ -253,7 +257,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
                 {/* Footer */}
                 <p className="text-center text-teal-100 text-sm mt-6">
-                    © 2026 DentaVision AI - AI-Powered Dental Assistant
+                    © 2026 DentaVision AI - AI-Powered Dental Assistant (v2.1 Mobile)
                 </p>
             </div>
         </div>

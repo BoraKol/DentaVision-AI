@@ -8,7 +8,12 @@
         "imaging": "Radyografi Analizi",
         "treatment": "Tedavi Planlama",
         "recipes": "İlaç Reçeteleri",
-        "settings": "Profil Ayarları"
+        "settings": "Profil Ayarları",
+        "generalInfo": "Genel Bilgiler",
+        "photos": "Fotoğraf Galerisi",
+        "treatmentHistory": "Tedavi Geçmişi",
+        "financial": "Finansal Durum",
+        "security": "Güvenlik"
     },
     "common": {
         "save": "Kaydet",
@@ -48,6 +53,7 @@
         "female": "Kadın",
         "other": "Diğer",
         "phone": "Telefon",
+        "contact": "İletişim",
         "email": "E-posta",
         "history": "Tıbbi Geçmiş",
         "symptoms": "Şikayetler",
@@ -71,7 +77,11 @@
         "emailPlaceholder": "hasta@email.com",
         "historyPlaceholder": "Kronik hastalıklar, geçirilmiş operasyonlar...",
         "symptomsPlaceholder": "Mevcut şikayetler...",
-        "habitsPlaceholder": "Sigara, alkol, diş fırçalama sıklığı..."
+        "habitsPlaceholder": "Sigara, alkol, diş fırçalama sıklığı...",
+        "patientDetails": "Hasta Bilgileri",
+        "timeline": "Tedavi Zaman Çizelgesi",
+        "credentials": "Hasta Giriş Bilgileri",
+        "credentialsHint": "Hastanın portal erişimi için yeni bir şifre belirleyin."
     },
     "appointment": {
         "title": "Randevu Takvimi",

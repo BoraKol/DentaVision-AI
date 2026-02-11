@@ -1,8 +1,14 @@
 export class AppConfig {
     static get GEMINI_API_KEY(): string {
-        const key = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        // First check local storage (User provided key)
+        const localKey = localStorage.getItem('denta_vision_gemini_key');
+        if (localKey) return localKey;
+
+        // Fallback to environment variables
+        const key = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
+
         if (!key) {
-            console.warn("API Key is missing in environment variables");
+            // Don't warn here to avoid spamming console if user hasn't set it yet
             return '';
         }
         return key;

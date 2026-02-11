@@ -6,6 +6,7 @@ export interface Patient {
     history: string;
     symptoms: string;
     habits: string;
+    password?: string;
 }
 
 export interface Diagnosis {

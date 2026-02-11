@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Image as ImageIcon, FileText, Activity, Pill, Check, Clock, Wallet } from 'lucide-react';
+import { ArrowLeft, User, Image as ImageIcon, FileText, Activity, Pill, Check, Clock, Wallet, Lock, Edit2, Save, X } from 'lucide-react';
 import PhotoGallery from './PhotoGallery';
 import { useLanguage } from '../context/LanguageContext';
 import { useTreatment } from '../context/TreatmentContext';
+import { usePatient } from '../context/PatientContext';
+import { useToast } from '../context/ToastContext';
 import { PrescriptionProvider } from '../context/PrescriptionContext';
 import { FinancialProvider } from '../context/FinancialContext';
+import api from '../../infrastructure/services/ApiService';
 import PrescriptionList from './PrescriptionList';
 import PatientFinancials from './PatientFinancials';
 
@@ -14,10 +17,21 @@ interface PatientDetailsProps {
 }
 
 const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
-    const [activeTab, setActiveTab] = useState<'info' | 'photos' | 'treatment' | 'recipes' | 'financial'>('treatment');
+    const [activeTab, setActiveTab] = useState<'info' | 'photos' | 'treatment' | 'recipes' | 'financial' | 'security'>('treatment');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState(patient);
+
     const { t } = useLanguage();
     const { items, loading, fetchTreatments, updateItemStatus } = useTreatment();
+    const { updatePatient } = usePatient();
+    const { addToast } = useToast();
     const patientId = patient.id || patient._id;
+
+    useEffect(() => {
+        if (patient) {
+            setEditForm(patient);
+        }
+    }, [patient]);
 
     useEffect(() => {
         if (activeTab === 'treatment' && patientId) {
@@ -26,11 +40,12 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
     }, [activeTab, patientId, fetchTreatments]);
 
     const tabs = [
-        { id: 'info', label: 'Genel Bilgiler', icon: User },
-        { id: 'photos', label: 'Fotoğraf Galerisi', icon: ImageIcon },
-        { id: 'treatment', label: 'Tedavi Geçmişi', icon: Activity },
+        { id: 'info', label: t('app.generalInfo'), icon: User },
+        { id: 'photos', label: t('app.photos'), icon: ImageIcon },
+        { id: 'treatment', label: t('app.treatmentHistory'), icon: Activity },
         { id: 'recipes', label: t('app.recipes'), icon: Pill },
-        { id: 'financial', label: 'Finansal Durum', icon: Wallet },
+        { id: 'financial', label: t('app.financial'), icon: Wallet },
+        { id: 'security', label: t('app.security'), icon: Lock },
     ];
 
     return (
@@ -47,7 +62,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800">{patient.name}</h1>
                         <p className="text-sm text-slate-500">
-                            {patient.age} yaş, {patient.gender?.toLowerCase() === 'male' ? 'Erkek' : 'Kadın'} • {patient.phone}
+                            {patient.age} {t('patient.ageYears')}, {patient.gender?.toLowerCase() === 'male' ? t('patient.male') : t('patient.female')} • {patient.phone}
                         </p>
                     </div>
                 </div>
@@ -80,30 +95,156 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                 <div className="max-w-7xl mx-auto">
                     {activeTab === 'info' && (
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 animate-in fade-in zoom-in duration-300">
-                            <h3 className="text-lg font-semibold mb-4">Hasta Bilgileri</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-xs text-slate-400 font-medium uppercase">Şikayet</label>
-                                        <p className="text-slate-700">{patient.symptoms || '-'}</p>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold">{t('patient.patientDetails')}</h3>
+                                {!isEditing ? (
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                        title="Düzenle"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setIsEditing(false);
+                                                setEditForm(patient); // Reset
+                                            }}
+                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="İptal"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    await updatePatient(patientId, editForm);
+                                                    addToast('Hasta bilgileri güncellendi.', 'success');
+                                                    setIsEditing(false);
+                                                } catch (e) {
+                                                    addToast('Güncelleme başarısız.', 'error');
+                                                }
+                                            }}
+                                            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                            title="Kaydet"
+                                        >
+                                            <Save className="w-4 h-4" />
+                                        </button>
                                     </div>
-                                    <div>
-                                        <label className="text-xs text-slate-400 font-medium uppercase">Özgeçmiş</label>
-                                        <p className="text-slate-700">{patient.history || '-'}</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-xs text-slate-400 font-medium uppercase">Alışkanlıklar</label>
-                                        <p className="text-slate-700">{patient.habits || '-'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-slate-400 font-medium uppercase">İletişim</label>
-                                        <p className="text-slate-700">{patient.email || '-'}</p>
-                                        <p className="text-slate-700">{patient.phone || '-'}</p>
-                                    </div>
-                                </div>
+                                )}
                             </div>
+
+                            {isEditing ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.name')}</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.name || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.symptoms')}</label>
+                                            <textarea
+                                                value={editForm.symptoms || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, symptoms: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                                rows={3}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.history')}</label>
+                                            <textarea
+                                                value={editForm.history || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, history: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                                rows={3}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.age')}</label>
+                                                <input
+                                                    type="number"
+                                                    value={editForm.age || ''}
+                                                    onChange={(e) => setEditForm({ ...editForm, age: Number(e.target.value) })}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.gender')}</label>
+                                                <select
+                                                    value={editForm.gender || 'male'}
+                                                    onChange={(e) => setEditForm({ ...editForm, gender: e.target.value as any })}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                                >
+                                                    <option value="male">{t('patient.male')}</option>
+                                                    <option value="female">{t('patient.female')}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.habits')}</label>
+                                            <textarea
+                                                value={editForm.habits || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, habits: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                                rows={2}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.phone')}</label>
+                                            <input
+                                                type="tel"
+                                                value={editForm.phone || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                                placeholder="+90..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase block mb-1">{t('patient.email')}</label>
+                                            <input
+                                                type="email"
+                                                value={editForm.email || ''}
+                                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase">{t('patient.symptoms')}</label>
+                                            <p className="text-slate-700">{patient.symptoms || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase">{t('patient.history')}</label>
+                                            <p className="text-slate-700">{patient.history || '-'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase">{t('patient.habits')}</label>
+                                            <p className="text-slate-700">{patient.habits || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-400 font-medium uppercase">{t('patient.contact')}</label>
+                                            <p className="text-slate-700 block"><span className="text-slate-400 text-xs w-16 inline-block">{t('patient.email')}:</span> {patient.email || '-'}</p>
+                                            <p className="text-slate-700 block"><span className="text-slate-400 text-xs w-16 inline-block">{t('patient.phone')}:</span> {patient.phone || '-'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -116,7 +257,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                     {activeTab === 'treatment' && (
                         <div className="space-y-6">
                             <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
-                                <h3 className="font-semibold text-slate-800">Tedavi Zaman Çizelgesi</h3>
+                                <h3 className="font-semibold text-slate-800">{t('patient.timeline')}</h3>
                                 <div className="flex gap-4 text-xs">
                                     <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500" /> Tamamlandı</div>
                                     <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500" /> Devam Ediyor</div>
@@ -204,9 +345,71 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                             </FinancialProvider>
                         </div>
                     )}
+
+                    {activeTab === 'security' && (
+                        <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-sm border border-slate-200 animate-in fade-in slide-in-from-bottom-4">
+                            <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                                <Lock className="w-5 h-5 mr-2 text-teal-600" />
+                                {t('patient.credentials')}
+                            </h3>
+                            <p className="text-sm text-slate-500 mb-6">
+                                {t('patient.credentialsHint')}
+                            </p>
+                            <PatientPasswordUpdate patientId={patientId} />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
+    );
+};
+
+
+const PatientPasswordUpdate: React.FC<{ patientId: string }> = ({ patientId }) => {
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { addToast } = useToast();
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (password.length < 6) {
+            addToast('Şifre en az 6 karakter olmalıdır', 'warning');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await api.put(`/patients/${patientId}`, { password });
+            addToast('Şifre başarıyla güncellendi', 'success');
+            setPassword('');
+        } catch (error) {
+            console.error(error);
+            addToast('Şifre güncellenirken hata oluştu', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleUpdate} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Yeni Şifre</label>
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    placeholder="Yeni şifreyi girin"
+                />
+            </div>
+            <button
+                type="submit"
+                disabled={loading || !password}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {loading ? 'Güncelleniyor...' : 'Şifreyi Güncelle'}
+            </button>
+        </form>
     );
 };
 

@@ -64,7 +64,7 @@ const DashboardContent: React.FC<DashboardProps> = React.memo(({ onViewChange })
     return (
         <div className="space-y-8">
             {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-teal-600 to-teal-800 rounded-2xl p-8 text-white shadow-lg">
+            <div className="bg-gradient-to-r from-teal-600 to-teal-800 rounded-2xl p-6 md:p-8 text-white shadow-lg">
                 <div className="flex justify-between items-start">
                     <div>
                         <h1 className="text-3xl font-bold mb-2">{greeting}, {user.title} {user.name}</h1>
@@ -96,7 +96,7 @@ const DashboardContent: React.FC<DashboardProps> = React.memo(({ onViewChange })
             {/* Action Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Briefing Card */}
-                <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-semibold text-slate-800 flex items-center">
                             <Calendar className="w-5 h-5 mr-2 text-teal-600" />
@@ -117,7 +117,7 @@ const DashboardContent: React.FC<DashboardProps> = React.memo(({ onViewChange })
                                                 <span className="font-medium text-slate-900">{patient.time}</span>
                                                 <span className="text-slate-900 font-bold">{patient.name}</span>
                                             </div>
-                                            <p className="text-sm text-slate-500 mt-1">{patient.procedure}</p>
+                                            <p className="text-sm text-slate-500 mt-1 break-words">{patient.procedure}</p>
                                             <div className="flex gap-2 mt-2">
                                                 {(patient?.required_supplies || []).map((supply: string, i: number) => (
                                                     <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">

@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    commissionRate: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100
+    },
     preferences: {
         theme: {
             type: String,

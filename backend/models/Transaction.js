@@ -41,6 +41,11 @@ const TransactionSchema = new mongoose.Schema({
     clinicName: {
         type: String,
         required: true
+    },
+    doctorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
     }
 }, {
     timestamps: true

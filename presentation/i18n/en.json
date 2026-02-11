@@ -7,7 +7,13 @@
         "intake": "Patient Intake & Risk",
         "imaging": "Radiograph Analysis",
         "treatment": "Treatment Planning",
-        "settings": "Profile Settings"
+        "settings": "Profile Settings",
+        "recipes": "Prescriptions",
+        "generalInfo": "General Info",
+        "photos": "Photo Gallery",
+        "treatmentHistory": "Treatment History",
+        "financial": "Financial Status",
+        "security": "Security"
     },
     "common": {
         "save": "Save",
@@ -47,6 +53,7 @@
         "female": "Female",
         "other": "Other",
         "phone": "Phone",
+        "contact": "Contact",
         "email": "Email",
         "history": "Medical History",
         "symptoms": "Symptoms",
@@ -70,7 +77,11 @@
         "emailPlaceholder": "patient@email.com",
         "historyPlaceholder": "Chronic diseases, past surgeries...",
         "symptomsPlaceholder": "Current symptoms...",
-        "habitsPlaceholder": "Smoking, alcohol, brushing frequency..."
+        "habitsPlaceholder": "Smoking, alcohol, brushing frequency...",
+        "patientDetails": "Patient Information",
+        "timeline": "Treatment Timeline",
+        "credentials": "Patient Credentials",
+        "credentialsHint": "Set a new password for patient portal access."
     },
     "appointment": {
         "title": "Appointment Calendar",
@@ -143,7 +154,8 @@
         "educationCenter": "Education Center",
         "antibioticGuide": "Updated guidelines on Antibiotic Prophylaxis have been published.",
         "readGuide": "Read Guide",
-        "urgency": "Urgency"
+        "urgency": "Urgency",
+        "noPatientsToday": "No appointments scheduled for today."
     },
     "calendar": {
         "months": [

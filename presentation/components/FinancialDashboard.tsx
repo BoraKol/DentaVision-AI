@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
     TrendingUp, TrendingDown, DollarSign, Plus,
-    Filter, Calendar as CalendarIcon, Download, Trash2
+    Filter, Calendar as CalendarIcon, Download, Trash2,
+    PieChart as PieChartIcon, Users as UsersIcon, CreditCard
 } from 'lucide-react';
+import {
+    PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -23,6 +27,9 @@ interface Transaction {
 const FinancialDashboard: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
+    const [doctorStats, setDoctorStats] = useState<any[]>([]);
+    const [paymentStats, setPaymentStats] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'overview' | 'doctors' | 'payments'>('overview');
     const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -32,15 +39,22 @@ const FinancialDashboard: React.FC = () => {
     const { addToast } = useToast();
     const { language } = useLanguage();
 
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
     const fetchFinancialData = async () => {
         try {
-            const [transRes, statsRes] = await Promise.all([
+            const [transRes, statsRes, doctorRes, paymentRes] = await Promise.all([
                 api.get('/financials'),
-                api.get('/financials/stats')
+                api.get('/financials/stats'),
+                api.get('/financials/reports/doctor-performance'),
+                api.get('/financials/reports/payment-methods')
             ]);
             setTransactions(transRes.data.data || []);
             setStats(statsRes.data.data || { income: 0, expense: 0, balance: 0 });
+            setDoctorStats(doctorRes.data.data || []);
+            setPaymentStats(paymentRes.data.data || []);
         } catch (err) {
+            console.error(err);
             addToast('Veriler yüklenemedi', 'error');
         } finally {
             setLoading(false);
@@ -95,40 +109,160 @@ const FinancialDashboard: React.FC = () => {
                 </button>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                    <div className="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center mr-4">
-                        <TrendingUp className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Toplam Gelir' : 'Total Income'}</p>
-                        <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats?.income || 0)}</p>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                    <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mr-4">
-                        <TrendingDown className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Toplam Gider' : 'Total Expense'}</p>
-                        <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats?.expense || 0)}</p>
-                    </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center ring-2 ring-teal-500/20">
-                    <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center mr-4">
-                        <DollarSign className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Net Bakiye' : 'Net Balance'}</p>
-                        <p className={`text-2xl font-bold ${(stats?.balance || 0) >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
-                            {formatCurrency(stats?.balance || 0)}
-                        </p>
-                    </div>
-                </div>
+            {/* Tabs Navigation */}
+            <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'overview' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    {language === 'tr' ? 'Genel Bakış' : 'Overview'}
+                </button>
+                <button
+                    onClick={() => setActiveTab('doctors')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'doctors' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    {language === 'tr' ? 'Hekim Performansı' : 'Doctor Performance'}
+                </button>
+                <button
+                    onClick={() => setActiveTab('payments')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'payments' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    {language === 'tr' ? 'Ödeme Analizi' : 'Payment Analysis'}
+                </button>
             </div>
+
+            {/* Overview Tab Content */}
+            {activeTab === 'overview' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center">
+                        <div className="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center mr-4">
+                            <TrendingUp className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Toplam Gelir' : 'Total Income'}</p>
+                            <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats?.income || 0)}</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center">
+                        <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mr-4">
+                            <TrendingDown className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Toplam Gider' : 'Total Expense'}</p>
+                            <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats?.expense || 0)}</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center ring-2 ring-teal-500/20">
+                        <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center mr-4">
+                            <DollarSign className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Net Bakiye' : 'Net Balance'}</p>
+                            <p className={`text-2xl font-bold ${(stats?.balance || 0) >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
+                                {formatCurrency(stats?.balance || 0)}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Doctor Performance Tab */}
+            {activeTab === 'doctors' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 className="font-bold text-slate-800 mb-4">{language === 'tr' ? 'Hekim Ciro Dağılımı' : 'Revenue by Doctor'}</h3>
+                        <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={doctorStats}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="doctorName" />
+                                    <YAxis />
+                                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                                    <Bar dataKey="totalIncome" fill="#0d9488" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 className="font-bold text-slate-800 mb-4">{language === 'tr' ? 'Detaylı Hekim Tablosu' : 'Detailed Doctor Table'}</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-slate-500 uppercase bg-slate-50">
+                                    <tr>
+                                        <th className="px-4 py-2">Hekim</th>
+                                        <th className="px-4 py-2 text-right">Ciro</th>
+                                        <th className="px-4 py-2 text-right">Prim (%)</th>
+                                        <th className="px-4 py-2 text-right">Hakediş</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {doctorStats.map((doc, index) => (
+                                        <tr key={index} className="border-b hover:bg-slate-50">
+                                            <td className="px-4 py-3 font-medium text-slate-900">{doc.doctorName}</td>
+                                            <td className="px-4 py-3 text-right">{formatCurrency(doc.totalIncome)}</td>
+                                            <td className="px-4 py-3 text-right text-slate-500">%{doc.commissionRate}</td>
+                                            <td className="px-4 py-3 text-right font-bold text-teal-600">{formatCurrency(doc.estimatedCommission)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Analysis Tab */}
+            {activeTab === 'payments' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
+                        <h3 className="font-bold text-slate-800 mb-4 w-full text-left">{language === 'tr' ? 'Ödeme Yöntemi Dağılımı' : 'Payment Method Distribution'}</h3>
+                        <div className="h-64 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={paymentStats}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        paddingAngle={5}
+                                        dataKey="totalAmount"
+                                        nameKey="_id"
+                                    >
+                                        {paymentStats.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 className="font-bold text-slate-800 mb-4">{language === 'tr' ? 'Tahsilat Detayları' : 'Collection Details'}</h3>
+                        <div className="space-y-4">
+                            {paymentStats.map((stat, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-2 h-8 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                        <div>
+                                            <p className="font-medium text-slate-800 uppercase">{stat._id.replace('_', ' ')}</p>
+                                            <p className="text-xs text-slate-500">{stat.count} {language === 'tr' ? 'İşlem' : 'Transactions'}</p>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold text-slate-700">{formatCurrency(stat.totalAmount)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Transactions Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">

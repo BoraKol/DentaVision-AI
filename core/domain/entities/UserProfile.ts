@@ -11,4 +11,5 @@ export interface UserProfile {
         theme: 'light' | 'dark';
         notifications: boolean;
     };
+    geminiApiKey?: string; // Stored locally, not in DB
 }

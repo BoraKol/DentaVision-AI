@@ -64,13 +64,101 @@ router.get('/stats', protect, async (req, res) => {
     }
 });
 
+// @desc    Get doctor performance report
+// @route   GET /api/financials/reports/doctor-performance
+// @access  Private
+router.get('/reports/doctor-performance', protect, async (req, res) => {
+    try {
+        const report = await Transaction.aggregate([
+            { 
+                $match: { 
+                    clinicName: req.user.clinicName,
+                    type: 'INCOME', // Only count income for performance
+                    doctorId: { $exists: true, $ne: null }
+                } 
+            },
+            {
+                $group: {
+                    _id: '$doctorId',
+                    totalIncome: { $sum: '$amount' },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'doctor'
+                }
+            },
+            {
+                $unwind: '$doctor'
+            },
+            {
+                $project: {
+                    doctorName: '$doctor.name',
+                    totalIncome: 1,
+                    count: 1,
+                    commissionRate: { $ifNull: ['$doctor.commissionRate', 0] },
+                    estimatedCommission: { 
+                        $multiply: ['$totalIncome', { $divide: [{ $ifNull: ['$doctor.commissionRate', 0] }, 100] }] 
+                    }
+                }
+            }
+        ]);
+
+        res.status(200).json({ success: true, data: report });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+});
+
+// @desc    Get payment method analysis
+// @route   GET /api/financials/reports/payment-methods
+// @access  Private
+router.get('/reports/payment-methods', protect, async (req, res) => {
+    try {
+        const report = await Transaction.aggregate([
+            { 
+                $match: { 
+                    clinicName: req.user.clinicName,
+                    type: 'INCOME' 
+                } 
+            },
+            {
+                $group: {
+                    _id: '$paymentMethod',
+                    totalAmount: { $sum: '$amount' },
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        res.status(200).json({ success: true, data: report });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+});
+
 // @desc    Create new transaction
 // @route   POST /api/financials
 // @access  Private
 router.post('/', protect, async (req, res) => {
     try {
-        req.body.clinicName = req.user.clinicName;
-        const transaction = await Transaction.create(req.body);
+        const { type, amount, category, description, paymentMethod, patientId, doctorId } = req.body;
+        
+        const transaction = await Transaction.create({
+            type,
+            amount,
+            category,
+            description,
+            paymentMethod,
+            patientId,
+            doctorId,
+            clinicName: req.user.clinicName
+        });
+        
         res.status(201).json({ success: true, data: transaction });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });

@@ -103,17 +103,32 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">{t('treatment.title')}</h2>
-          <p className="text-slate-500 text-sm">{t('treatment.subtitle')}</p>
+      <div className="flex flex-col items-center justify-center gap-6 mb-8 mt-4">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-slate-800">{t('treatment.title')}</h2>
+          <p className="text-slate-500 mt-2">{t('treatment.subtitle')}</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Patient Selector */}
-          <div className="relative group min-w-[250px]">
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-teal-500 transition-all">
-              <Search className="w-4 h-4 text-slate-400" />
+        <div className="flex flex-col gap-4 w-full max-w-xl">
+          {/* 1. New Procedure (Top) */}
+          <button
+            onClick={() => {
+              if (!patientId) {
+                addToast(language === 'tr' ? 'Lütfen önce bir hasta seçin.' : 'Please select a patient first.', 'warning');
+                return;
+              }
+              setIsAddModalOpen(true);
+            }}
+            className="order-1 flex items-center justify-center px-6 py-3.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-colors shadow-sm w-full font-semibold text-base"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            {t('treatment.newProcedure')}
+          </button>
+
+          {/* 2. Patient Search (Middle) */}
+          <div className="order-2 relative group w-full z-20">
+            <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-teal-500 transition-all shadow-sm">
+              <Search className="w-5 h-5 text-slate-400" />
               <input
                 type="text"
                 placeholder={activePatient ? activePatient.name : (language === 'tr' ? 'Hasta ara...' : 'Search patient...')}
@@ -130,7 +145,7 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
                     setShowPatientResults(false);
                   }
                 }}
-                className="flex-1 bg-transparent border-none p-0 focus:ring-0 text-sm placeholder:text-slate-400"
+                className="flex-1 bg-transparent border-none p-0 focus:ring-0 text-base placeholder:text-slate-400"
               />
               {activePatient && !searchTerm && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-teal-50 text-teal-700 rounded-md text-xs font-medium border border-teal-100">
@@ -172,35 +187,20 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
             )}
           </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                if (!patientId) {
-                  addToast(language === 'tr' ? 'Lütfen önce bir hasta seçin.' : 'Please select a patient first.', 'warning');
-                  return;
-                }
-                setIsAIModalOpen(true);
-              }}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-lg transition-all shadow-md shrink-0 border border-violet-500/30"
-            >
-              <Sparkles className="w-5 h-5 mr-2" />
-              {language === 'tr' ? 'AI Öneri' : 'AI Suggest'}
-            </button>
-
-            <button
-              onClick={() => {
-                if (!patientId) {
-                  addToast(language === 'tr' ? 'Lütfen önce bir hasta seçin.' : 'Please select a patient first.', 'warning');
-                  return;
-                }
-                setIsAddModalOpen(true);
-              }}
-              className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors shadow-sm shrink-0"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              {t('treatment.newProcedure')}
-            </button>
-          </div>
+          {/* 3. AI Suggest (Bottom) */}
+          <button
+            onClick={() => {
+              if (!patientId) {
+                addToast(language === 'tr' ? 'Lütfen önce bir hasta seçin.' : 'Please select a patient first.', 'warning');
+                return;
+              }
+              setIsAIModalOpen(true);
+            }}
+            className="order-3 flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl transition-all shadow-md w-full border border-violet-500/30 active:scale-95 font-semibold text-base"
+          >
+            <Sparkles className="w-5 h-5 mr-2" />
+            {language === 'tr' ? 'AI Öneri' : 'AI Suggest'}
+          </button>
         </div>
       </div>
 
@@ -226,20 +226,20 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
       {/* Kanban / Phases Grid */}
       <div className="flex-1 overflow-x-auto">
         {!patientId ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white rounded-2xl border-2 border-dashed border-slate-200 animate-in fade-in duration-500">
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white rounded-2xl border-2 border-dashed border-slate-200 animate-in fade-in duration-500 max-w-3xl mx-auto w-full">
             <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center text-teal-600 mb-6">
               <UserIcon className="w-10 h-10" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">
+            <h3 className="text-xl font-bold text-slate-800 mb-3">
               {language === 'tr' ? 'Hasta Seçilmedi' : 'No Patient Selected'}
             </h3>
-            <p className="text-slate-500 max-w-sm mb-8">
+            <p className="text-slate-500 max-w-md mb-8 text-lg">
               {language === 'tr'
                 ? 'Yeni bir tedavi planı oluşturmak veya mevcut bir planı görmek için lütfen arama kutusunu kullanarak bir hasta seçin.'
                 : 'Please select a patient using the search box above to create a new treatment plan or view an existing one.'}
             </p>
             <div className="flex items-center justify-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="flex items-center gap-2 text-sm text-slate-400 bg-slate-50 px-4 py-2 rounded-full">
                 <Search className="w-4 h-4" />
                 <span>{language === 'tr' ? 'Yukarıdaki kutudan arama yapın' : 'Use the search box above'}</span>
               </div>
@@ -247,13 +247,13 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
           </div>
         ) : (
           <div className="flex flex-col gap-6 h-full pb-4 overflow-y-auto">
-            <div className="w-full">
+            <div className="w-full overflow-x-auto">
               <Odontogram patientId={patientId} />
             </div>
 
-            <div className="flex gap-6 min-w-[1000px] overflow-x-auto">
+            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 snap-x">
               {phases.map((phase) => (
-                <div key={phase.id} className="flex-1 flex flex-col bg-slate-50 rounded-xl border border-slate-200 max-w-md">
+                <div key={phase.id} className="flex-1 flex flex-col bg-slate-50 rounded-xl border border-slate-200 min-w-[300px] md:min-w-[350px] snap-center">
                   {/* Phase Header */}
                   <div className={`p-4 border-b border-slate-200 rounded-t-xl flex items-center justify-between ${phase.color.replace('text-', 'bg-opacity-20 ')}`}>
                     <div className="flex items-center space-x-2 font-semibold">

@@ -11,10 +11,12 @@ const api = axios.create({
 });
 
 // Request interceptor - Add token to headers
+// Request interceptor - Add token to headers
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
-        if (token) {
+        // Only add token if not already present (allows overriding for patient portal)
+        if (token && !config.headers.Authorization) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -29,12 +31,21 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Token expired or invalid - clear storage
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            // Redirect to login if not already there
-            if (window.location.pathname !== '/login') {
-                window.location.href = '/login';
+            const isPortalRequest = error.config.url?.includes('/portal');
+
+            if (isPortalRequest) {
+                localStorage.removeItem('patientToken');
+                localStorage.removeItem('patientUser');
+                if (window.location.pathname !== '/portal/login') {
+                    window.location.href = '/portal/login';
+                }
+            } else {
+                // Doctor/Admin Token expired
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
             }
         }
         return Promise.reject(error);

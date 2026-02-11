@@ -6,9 +6,10 @@ import { TreatmentItem } from '../../../core/domain/entities/TreatmentPlan';
 
 interface OdontogramProps {
     patientId: string;
+    readOnly?: boolean;
 }
 
-const Odontogram: React.FC<OdontogramProps> = ({ patientId }) => {
+const Odontogram: React.FC<OdontogramProps> = ({ patientId, readOnly = false }) => {
     const { items, addItem } = useTreatment();
     const { t, language } = useLanguage();
 
@@ -40,6 +41,7 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId }) => {
     };
 
     const handleSurfaceClick = (toothId: string, surface: string) => {
+        if (readOnly) return;
         if (selectedTooth && selectedTooth !== toothId) {
             setSelectedTooth(toothId);
             setSelectedSurfaces([surface]);
@@ -95,11 +97,11 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId }) => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
             <h3 className="text-lg font-bold text-slate-800 mb-6">{language === 'tr' ? 'Diş Grafiği (Odontogram)' : 'Odontogram'}</h3>
 
-            <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+            <div className="flex flex-col gap-8 max-w-4xl mx-auto overflow-x-auto pb-4">
                 {/* Maxillary */}
-                <div className="flex justify-center gap-8 pb-4 border-b border-slate-100">
+                <div className="flex flex-col md:flex-row justify-center gap-8 pb-4 border-b border-slate-100 min-w-[600px] md:min-w-0">
                     {/* Q1 (Right) */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-end">
                         {quadrant1.map(id => (
                             <Tooth
                                 key={id} id={id}
@@ -110,7 +112,7 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId }) => {
                         ))}
                     </div>
                     {/* Vertical Divider */}
-                    <div className="w-px bg-slate-300"></div>
+                    <div className="hidden md:block w-px bg-slate-300"></div>
                     {/* Q2 (Left) */}
                     <div className="flex gap-2">
                         {quadrant2.map(id => (
@@ -125,9 +127,9 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId }) => {
                 </div>
 
                 {/* Mandibular */}
-                <div className="flex justify-center gap-8 pt-2">
+                <div className="flex flex-col md:flex-row justify-center gap-8 pt-2 min-w-[600px] md:min-w-0">
                     {/* Q4 (Right) */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-end">
                         {quadrant4.map(id => (
                             <Tooth
                                 key={id} id={id}
@@ -138,9 +140,9 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId }) => {
                         ))}
                     </div>
                     {/* Vertical Divider */}
-                    <div className="w-px bg-slate-300"></div>
+                    <div className="hidden md:block w-px bg-slate-300"></div>
                     {/* Q3 (Left) */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-start">
                         {quadrant3.map(id => (
                             <Tooth
                                 key={id} id={id}

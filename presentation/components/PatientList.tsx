@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, User, Calendar, Trash2, Edit2, FileText, X } from 'lucide-react';
+import { Search, Plus, User, Calendar, Trash2, Edit2, FileText, X, Lock } from 'lucide-react';
 import { usePatient } from '../context/PatientContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -24,7 +24,8 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
         symptoms: editingPatient?.symptoms || '',
         habits: editingPatient?.habits || '',
         phone: editingPatient?.phone || '',
-        email: editingPatient?.email || ''
+        email: editingPatient?.email || '',
+        password: '' // Only for setting new password
     });
 
     React.useEffect(() => {
@@ -37,7 +38,8 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
                 symptoms: editingPatient.symptoms || '',
                 habits: editingPatient.habits || '',
                 phone: editingPatient.phone || '',
-                email: editingPatient.email || ''
+                email: editingPatient.email || '',
+                password: ''
             });
         } else {
             setFormData({
@@ -48,7 +50,8 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
                 symptoms: '',
                 habits: '',
                 phone: '',
-                email: ''
+                email: '',
+                password: ''
             });
         }
     }, [editingPatient, isOpen]);
@@ -76,7 +79,9 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
         update: language === 'tr' ? 'Güncelle' : 'Update',
         enterName: language === 'tr' ? 'Lütfen hasta adı girin.' : 'Please enter patient name.',
         patientCreated: language === 'tr' ? 'Hasta kaydı oluşturuldu.' : 'Patient record created.',
-        patientUpdated: language === 'tr' ? 'Hasta bilgileri güncellendi.' : 'Patient information updated.'
+        patientUpdated: language === 'tr' ? 'Hasta bilgileri güncellendi.' : 'Patient information updated.',
+        password: language === 'tr' ? 'Portal Şifresi' : 'Portal Password',
+        passwordPlaceholder: language === 'tr' ? 'Erişim şifresi belirleyin' : 'Set access password'
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -116,7 +121,7 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-slate-700 mb-1">
                                 {labels.name} <span className="text-red-500">*</span>
@@ -168,6 +173,19 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
                                 placeholder="email@domain.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center">
+                                <Lock className="w-3 h-3 mr-1 text-slate-400" />
+                                {labels.password}
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                placeholder={labels.passwordPlaceholder}
                             />
                         </div>
                     </div>
@@ -312,14 +330,14 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
 
     return (
         <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800">{labels.title}</h2>
                     <p className="text-slate-500 text-sm">{labels.subtitle}</p>
                 </div>
                 <button
                     onClick={handleAddNew}
-                    className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors shadow-sm"
+                    className="flex items-center justify-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors shadow-sm w-full sm:w-auto active:scale-95"
                 >
                     <Plus className="w-5 h-5 mr-2" />
                     {labels.newPatient}
@@ -358,7 +376,7 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
                             <div className="p-4">
                                 <div className="flex items-start justify-between">
                                     <div
-                                        className="flex items-center space-x-4 cursor-pointer flex-1"
+                                        className="flex items-center space-x-4 cursor-pointer flex-1 min-w-0"
                                         onClick={() => selectPatient(selectedPatient?.id === patient.id ? null : patient.id)}
                                     >
                                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold text-lg">

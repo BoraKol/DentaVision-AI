@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import {
     LayoutDashboard,
     UserPlus,
@@ -12,7 +13,8 @@ import {
     CalendarDays,
     ArrowLeft,
     PieChart,
-    FlaskConical
+    FlaskConical,
+    LogOut
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import PatientIntake from './components/PatientIntake';
@@ -25,6 +27,8 @@ import LanguageToggle from './components/LanguageToggle';
 import ThemeToggle from './components/ThemeToggle';
 import Disclaimer from './components/Disclaimer';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { NetworkStatus } from './components/NetworkStatus';
+import { notificationService } from './services/PushNotificationService';
 import { UserProvider, useUser } from './context/UserContext';
 import { TreatmentProvider } from './context/TreatmentContext';
 import { ToastProvider } from './context/ToastContext';
@@ -38,6 +42,9 @@ import LoginPage from './pages/LoginPage';
 import PatientDetails from './components/PatientDetails';
 import FinancialDashboard from './components/FinancialDashboard';
 import { PrescriptionProvider } from './context/PrescriptionContext';
+// import ReportPreview from './components/ReportPreview'; // Removed as file is missing
+import PatientLogin from './pages/portal/PatientLogin';
+import PatientDashboard from './pages/portal/PatientDashboard';
 import Inventory from './components/Inventory';
 import LabTracking from './components/LabTracking';
 import { InventoryProvider } from './context/InventoryContext';
@@ -65,10 +72,12 @@ const Sidebar: React.FC<{
 }> = ({ currentView, onViewChange, isOpen, onClose }) => {
     const { user } = useUser();
     const { t, language } = useLanguage();
+    const { logout } = useAuth();
 
     const iconColors: Record<View, string> = {
         [View.DASHBOARD]: 'text-blue-600',
         [View.PATIENTS]: 'text-teal-600',
+        [View.PATIENT_DETAILS]: 'text-teal-600', // Added missing key
         [View.CALENDAR]: 'text-violet-600',
         [View.INTAKE]: 'text-emerald-600',
         [View.IMAGING]: 'text-indigo-600',
@@ -106,8 +115,8 @@ const Sidebar: React.FC<{
     return (
         <aside
             className={`flex flex-col h-full bg-white border-r border-slate-200/60 
-                fixed inset-y-0 left-0 z-30 w-72 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 
-                ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'} shadow-2xl lg:shadow-none pt-[env(safe-area-inset-top)] lg:pt-0`}
         >
             <div className="flex items-center justify-between h-20 px-6 border-b border-slate-100">
                 <div className="flex items-center space-x-3 text-slate-800">
@@ -151,8 +160,8 @@ const Sidebar: React.FC<{
                 </div>
             </nav>
 
-            <div className="flex-none p-4 border-t border-slate-100 bg-slate-50">
-                <div className="flex items-center space-x-3">
+            <div className="flex-none p-4 border-t border-slate-100 bg-slate-50 pb-20 lg:pb-4 mb-[env(safe-area-inset-bottom)]">
+                <div className="flex items-center space-x-3 mb-4">
                     <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold overflow-hidden border-2 border-white shadow-sm">
                         {user.avatarUrl ? (
                             <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -165,6 +174,15 @@ const Sidebar: React.FC<{
                         <p className="text-slate-500 truncate">{user.specialty}</p>
                     </div>
                 </div>
+                <button
+                    onClick={() => {
+                        logout();
+                    }}
+                    className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-red-600 transition-all rounded-lg hover:bg-red-50 hover:shadow-sm border border-transparent hover:border-red-100 bg-white shadow-sm"
+                >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {language === 'tr' ? 'Çıkış Yap' : 'Log Out'}
+                </button>
             </div>
         </aside>
     );
@@ -224,11 +242,12 @@ const AppContent: React.FC = () => {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50">
+        <div className="flex h-screen h-dvh overflow-hidden bg-slate-50">
+            <NetworkStatus />
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+                    className="fixed inset-0 z-40 bg-black/50 lg:hidden backdrop-blur-sm"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
@@ -244,8 +263,8 @@ const AppContent: React.FC = () => {
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Header */}
-                <header className="flex items-center justify-between h-16 px-4 bg-white border-b border-slate-200 lg:px-8">
-                    <div className="flex items-center space-x-3">
+                <header className="flex items-center justify-between min-h-[4rem] px-4 bg-white border-b border-slate-200 lg:px-8 sticky top-0 z-30 pt-[env(safe-area-inset-top)] transition-all">
+                    <div className="flex items-center space-x-3 py-2">
                         <button
                             onClick={toggleSidebar}
                             className="p-2 -ml-2 text-slate-500 rounded-md lg:hidden hover:bg-slate-100"
@@ -261,7 +280,7 @@ const AppContent: React.FC = () => {
                                 {t('app.dashboard')}
                             </button>
                         )}
-                        <h1 className="text-lg font-semibold text-slate-800">
+                        <h1 className="text-lg font-semibold text-slate-800 truncate max-w-[150px] sm:max-w-none">
                             {currentView === View.DASHBOARD && t('app.dashboard')}
                             {currentView === View.PATIENTS && t('app.patients')}
                             {currentView === View.CALENDAR && t('app.calendar')}
@@ -274,17 +293,17 @@ const AppContent: React.FC = () => {
                             {currentView === View.SETTINGS && t('app.settings')}
                         </h1>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2 sm:space-x-3 py-2">
                         <ThemeToggle />
                         <LanguageToggle />
-                        <span className="px-3 py-1 text-xs font-medium text-teal-700 bg-teal-50 rounded-full border border-teal-100">
+                        <span className="hidden sm:inline-block px-3 py-1 text-xs font-medium text-teal-700 bg-teal-50 rounded-full border border-teal-100">
                             {user.clinicName}
                         </span>
                     </div>
                 </header>
 
                 {/* Scrollable Area */}
-                <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+                <div className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-8 pb-8 lg:pb-8 mb-[env(safe-area-inset-bottom)]">
                     <ErrorBoundary>
                         <div className="max-w-7xl mx-auto space-y-6">
                             {renderContent()}
@@ -306,6 +325,9 @@ const AuthenticatedApp: React.FC = () => {
     React.useEffect(() => {
         if (!isAuthenticated) {
             setShowApp(false);
+        } else {
+            // Initialize Push Notifications when authenticated
+            notificationService.init();
         }
     }, [isAuthenticated]);
 
@@ -345,7 +367,14 @@ const App: React.FC = () => (
         <LanguageProvider>
             <ToastProvider>
                 <AuthProvider>
-                    <AuthenticatedApp />
+                    <Routes>
+                        {/* Patient Portal Routes */}
+                        <Route path="/portal/login" element={<PatientLogin />} />
+                        <Route path="/portal/dashboard" element={<PatientDashboard />} />
+
+                        {/* Main Application with Sidebar */}
+                        <Route path="/*" element={<AuthenticatedApp />} />
+                    </Routes>
                 </AuthProvider>
             </ToastProvider>
         </LanguageProvider>

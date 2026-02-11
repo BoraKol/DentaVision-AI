@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useUser } from '../context/UserContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Mail, Building, FileBadge, Save, Camera, Check, LogOut } from 'lucide-react';
+import { User, Mail, Building, FileBadge, Save, Camera, Check, LogOut, Key, Eye, EyeOff } from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 import NotificationSettings from './NotificationSettings';
 
@@ -12,7 +12,25 @@ const ProfileSettingsContent: React.FC = () => {
     const { t, language } = useLanguage();
     const [formData, setFormData] = useState(user);
     const [isSaved, setIsSaved] = useState(false);
+    const [apiKey, setApiKey] = useState('');
+    const [showKey, setShowKey] = useState(false);
+    const [keySaved, setKeySaved] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        const storedKey = localStorage.getItem('denta_vision_gemini_key') || '';
+        setApiKey(storedKey);
+    }, []);
+
+    const handleSaveKey = () => {
+        if (apiKey.trim()) {
+            localStorage.setItem('denta_vision_gemini_key', apiKey.trim());
+        } else {
+            localStorage.removeItem('denta_vision_gemini_key');
+        }
+        setKeySaved(true);
+        setTimeout(() => setKeySaved(false), 3000);
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -180,6 +198,59 @@ const ProfileSettingsContent: React.FC = () => {
                     </button>
                 </div>
             </form>
+
+            {/* AI Configuration */}
+            <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 bg-slate-50">
+                    <h3 className="text-lg font-medium text-slate-800 flex items-center">
+                        <Key className="w-5 h-5 mr-2 text-teal-600" />
+                        {language === 'tr' ? 'Yapay Zeka Konfigürasyonu' : 'AI Configuration'}
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-1">
+                        {language === 'tr'
+                            ? 'Kendi Gemini API anahtarınızı kullanarak AI özelliklerini etkinleştirin.'
+                            : 'Enable AI features using your own Gemini API key.'}
+                    </p>
+                </div>
+                <div className="p-6">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Gemini API Key
+                    </label>
+                    <div className="flex gap-3">
+                        <div className="relative flex-1">
+                            <input
+                                type={showKey ? 'text' : 'password'}
+                                value={apiKey}
+                                onChange={(e) => setApiKey(e.target.value)}
+                                className="w-full pl-10 pr-12 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                placeholder="AIzaSy..."
+                            />
+                            <Key className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                            <button
+                                type="button"
+                                onClick={() => setShowKey(!showKey)}
+                                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                            >
+                                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleSaveKey}
+                            className={`px-4 py-2 rounded-lg text-white font-medium transition-all flex items-center ${keySaved ? 'bg-green-600' : 'bg-teal-600 hover:bg-teal-700'
+                                }`}
+                        >
+                            {keySaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                            <span className="ml-2 hidden sm:inline">{language === 'tr' ? 'Kaydet' : 'Save'}</span>
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                        {language === 'tr'
+                            ? 'Anahtarınız sadece bu cihazda saklanır ve sunucularımıza gönderilmez.'
+                            : 'Your key is stored only on this device and is never sent to our servers.'}
+                    </p>
+                </div>
+            </div>
 
             {/* Notification Settings */}
             <div className="mt-6">

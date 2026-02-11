@@ -3,7 +3,7 @@ import { usePatientAnalysis } from '../hooks/usePatientAnalysis';
 import { Patient } from '../../core/domain/entities/Patient';
 import { useLanguage } from '../context/LanguageContext';
 import RiskChart from './RiskChart';
-import { Activity, CheckCircle2, FileJson, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Activity, CheckCircle2, FileJson, ChevronRight, AlertTriangle, Lock } from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const PatientIntakeContent: React.FC = () => {
@@ -19,10 +19,11 @@ const PatientIntakeContent: React.FC = () => {
         id: '',
         name: '',
         age: 30,
-        gender: 'male',
+        gender: 'Male',
         history: '',
         symptoms: '',
-        habits: ''
+        habits: '',
+        password: '' // Optional password for portal access
     });
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -72,11 +73,13 @@ const PatientIntakeContent: React.FC = () => {
         longTerm: language === 'tr' ? 'Uzun Vadeli / Bakım' : 'Long Term / Maintenance',
         noAnalysis: language === 'tr' ? 'Analiz Oluşturulmadı' : 'No Analysis Generated',
         completeForm: language === 'tr' ? 'Risk profili oluşturmak için değerlendirme formunu doldurun.' : 'Complete the assessment form to generate a risk profile.',
-        analysisError: language === 'tr' ? 'Analiz başarısız. Lütfen girdilerinizi kontrol edin ve tekrar deneyin.' : 'Analysis failed. Please check your inputs and try again.'
+        analysisError: language === 'tr' ? 'Analiz başarısız. Lütfen girdilerinizi kontrol edin ve tekrar deneyin.' : 'Analysis failed. Please check your inputs and try again.',
+        password: language === 'tr' ? 'Portal Şifresi' : 'Portal Password',
+        passwordPlaceholder: language === 'tr' ? 'Erişim şifresi belirleyin' : 'Set access password'
     };
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8 overflow-hidden">
             {/* Input Form */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <h2 className="text-xl font-semibold text-slate-800 mb-6 flex items-center">
@@ -143,6 +146,21 @@ const PatientIntakeContent: React.FC = () => {
                             value={formData.habits}
                             onChange={handleInputChange}
                             placeholder={labels.habitsPlaceholder}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center">
+                            <Lock className="w-4 h-4 mr-1 text-slate-400" />
+                            {labels.password}
+                        </label>
+                        <input
+                            type="text"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            placeholder={labels.passwordPlaceholder}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
                         />
                     </div>

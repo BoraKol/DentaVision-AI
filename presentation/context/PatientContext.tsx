@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { Patient } from '../../core/domain/entities/Patient';
 import { patientsAPI } from '../../infrastructure/services/ApiService';
 import { useAuth } from './AuthContext';
+import { OfflineStorageService, OFFLINE_KEYS } from '../services/OfflineStorageService';
 
 interface PatientWithHistory extends Patient {
     analysisHistory?: {
@@ -55,6 +56,7 @@ export const PatientProvider: React.FC<{ children: ReactNode }> = ({ children })
             const response = await patientsAPI.getAll();
             if (!Array.isArray(response.data)) {
                 console.error('Expected array from API but got:', typeof response.data);
+                // Try to load from cache even if API returns weird data, or clear? Better to keep potential old data or empty.
                 setPatients([]);
                 return;
             }
@@ -66,9 +68,24 @@ export const PatientProvider: React.FC<{ children: ReactNode }> = ({ children })
                 // Assuming analyses are populated or fetched - for now handled simply
                 analysisHistory: p.analyses || [] // This might need adjustment based on backend population
             }));
+
+            // Cache the fresh data
+            OfflineStorageService.saveData(OFFLINE_KEYS.PATIENTS, patientsData);
             setPatients(patientsData);
         } catch (error) {
             console.error('Failed to fetch patients', error);
+            // Fallback to offline cache
+            const cachedData = OfflineStorageService.getData(OFFLINE_KEYS.PATIENTS);
+            if (cachedData) {
+                console.log('Loaded patients from offline cache');
+                // We need to revive Dates because JSON.parse makes them strings
+                const revisedData = cachedData.map((p: any) => ({
+                    ...p,
+                    createdAt: new Date(p.createdAt),
+                    updatedAt: new Date(p.updatedAt)
+                }));
+                setPatients(revisedData);
+            }
         }
     }, [user]);
 

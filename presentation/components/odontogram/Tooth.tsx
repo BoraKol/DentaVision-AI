@@ -4,7 +4,7 @@ interface ToothProps {
     id: string; // ISO format (e.g., "11", "48")
     isDeciduous?: boolean; // Süt dişi mi?
     treatments?: {
-        surface: string; // 'M', 'O', 'D', 'B', 'L', 'General'
+        surface: string; // 'M', 'O', 'D', 'B', 'L', 'Root', 'General'
         status: 'planned' | 'completed' | 'existing';
         color?: string;
     }[];
@@ -19,131 +19,138 @@ const Tooth: React.FC<ToothProps> = ({
     onSurfaceClick,
     selectedSurfaces = []
 }) => {
-    // Determine quadrant and position
     const quadrant = parseInt(id.charAt(0));
     const position = parseInt(id.charAt(1));
 
-    // Define colors for states
+    // Determine Tooth Type
+    const type = useMemo(() => {
+        if (position <= 2) return 'incisor';
+        if (position === 3) return 'canine';
+        if (position <= 5) return 'premolar';
+        return 'molar';
+    }, [position]);
+
+    const isUpper = quadrant === 1 || quadrant === 2;
+    // For standard FDI view:
+    // Q1 (Right Upper): Root Up
+    // Q2 (Left Upper): Root Up
+    // Q3 (Left Lower): Root Down
+    // Q4 (Right Lower): Root Down
+
     const colors = {
-        default: '#f1f5f9', // slate-100
+        default: '#f8fafc', // slate-50
         hover: '#e2e8f0',   // slate-200
         selected: '#0d9488', // teal-600
-        restoration: '#3b82f6', // blue-500 (completed)
-        decay: '#ef4444',     // red-500 (planned/issue)
+        restoration: '#3b82f6', // blue-500
+        decay: '#ef4444',     // red-500
         missing: '#94a3b8',   // slate-400
+        root: '#fbbf24',      // amber-400 (for root canal)
+        crown: '#f59e0b',     // amber-500
     };
 
     const getSurfaceColor = (surface: string) => {
-        // 1. Check if selected
+        // 1. Special case for Extraction (General) - entire tooth extraction visual
+        // controlled outside but if 'Extraction' is passed as treatment...
+
         if (selectedSurfaces.includes(surface)) return colors.selected;
 
-        // 2. Check treatments
-        const treatment = treatments.find(t => t.surface === surface) ||
-            treatments.find(t => t.surface === 'General'); // General covers all if needed
-
+        const treatment = treatments.find(t => t.surface === surface);
         if (treatment) {
             return treatment.color || (treatment.status === 'completed' ? colors.restoration : colors.decay);
         }
-
         return colors.default;
     };
 
-    // SVG Paths for a stylized tooth map (Geometric / Box style)
-    // Layout:
-    //      Buccal (Top)
-    // Distal (L)  Occlusal (Center)  Mesial (R)  <-- Depends on quadrant!
-    //      Lingual (Bottom)
+    // Check for special whole-tooth conditions
+    const hasExtraction = treatments.some(t => t.procedureName?.includes('Extraction') || t.surface === 'General' && t.procedureName?.includes('Extraction'));
+    const hasCrown = treatments.some(t => t.procedureName?.includes('Crown'));
+    const hasRootCanal = treatments.some(t => t.surface === 'Root');
 
-    // For ISO 11-18 (Right Upper): Mesial is Left (towards midline 11), Distal is Right (towards 18)
-    // Actually in a 2D map:
-    // Q1 (Upper Right from doc view, Left from patient view? No, standard chart is patient's face to us)
-    // Standard Dental Chart (FDI):
-    // Right (18-11) | Left (21-28)
-    // ----------------------------
-    // Right (48-41) | Left (31-38)
-
-    // So for Q1 (18->11): Mesial is towards 11 (Right side of specific tooth graphic), Distal is Left.
-    // Wait, let's stick to a simpler generic logic:
-    // Center = Occlusal
-    // Top = Buccal (for Upper), Lingual (for Lower)? No, usually standardized to Top/Bottom in view.
-    // Let's standard: Top=Buccal (Maxillary) / Lingual (Mandibular)? 
-    // Usually Charts are:
-    //     B
-    // D O M  (For Q1)
-    //     P (Palatal)
-
-    // Let's implement a generic 5-zone box map and handle labeling at parent level or mentally.
-    // Top, Bottom, Left, Right, Center.
-
-    // Surfaces mapping based on ISO quadrant to coordinate
-    // Q1 (18-11): Top=B, Bot=P, Left=D, Right=M
-    // Q2 (21-28): Top=B, Bot=P, Left=M, Right=D
-    // Q3 (31-38): Top=L, Bot=B, Left=M, Right=D  (Lower Left)
-    // Q4 (48-41): Top=L, Bot=B, Left=D, Right=M  (Lower Right)
-
+    // Surface Mapping (Standard 5-zone box logic)
+    // Adjust mapping based on quadrant for standardized L/B/M/D
     const surfaces = useMemo(() => {
         let map = { top: 'B', bottom: 'L', left: 'D', right: 'M', center: 'O' };
+        // Q1 (11-18) UR: Top=B, Bot=P/L, Left=D, Right=M (Towards midline 1 is M) ==> Wait
+        // Center is midline.
+        // 18 17 ... 11 | 21 ... 28
+        // For 11: Mesial is Right (towards midline), Distal is Left.
+        // For 21: Mesial is Left (towards midline), Distal is Right.
 
-        if (quadrant === 1) { map = { top: 'B', bottom: 'P', left: 'D', right: 'M', center: 'O' }; } // P = Palatal ~ Lingual
-        if (quadrant === 2) { map = { top: 'B', bottom: 'P', left: 'M', right: 'D', center: 'O' }; }
-        if (quadrant === 3) { map = { top: 'L', bottom: 'B', left: 'M', right: 'D', center: 'O' }; }
-        if (quadrant === 4) { map = { top: 'L', bottom: 'B', left: 'D', right: 'M', center: 'O' }; }
+        // Correct visual mapping for user facing screen:
+        // Left side of screen is Patient's Right (Q1/Q4).
+        // Right side of screen is Patient's Left (Q2/Q3).
 
-        // Normalize P to L for simplicity in DB usually
-        if (map.bottom === 'P') map.bottom = 'L'; // Treat Palatal as Lingual for data storage
-
+        if (quadrant === 1 || quadrant === 4) { // Right side of patient (Left on screen)
+            map = { top: isUpper ? 'B' : 'L', bottom: isUpper ? 'L' : 'B', left: 'D', right: 'M', center: 'O' };
+            // Actually for Q1/Q4 (Right side): Mesial is towards center line (Right of the tooth visual).
+            // Distal is Left of the tooth visual. (Away from center).
+        } else { // Left side of patient (Right on screen - Q2/Q3)
+            map = { top: isUpper ? 'B' : 'L', bottom: isUpper ? 'L' : 'B', left: 'M', right: 'D', center: 'O' };
+            // For Q2/Q3: Mesial is towards center line (Left of the tooth visual).
+            // Distal is Right.
+        }
         return map;
-    }, [quadrant]);
+    }, [quadrant, isUpper]);
+
+    // Root Path Generation
+    const rootPath = isUpper
+        ? "M 30,35 Q 35,0 50,5 Q 65,0 70,35" // Roots going UP
+        : "M 30,65 Q 35,100 50,95 Q 65,100 70,65"; // Roots going DOWN
+
+    // Crown Container Transform
+    // We'll keep crown in center 0-100 x 0-100 logic, but scale/translate
+    // Let's use a 100x140 viewBox.
+    // Crown area: 15,40 to 85,100 (approx)
+
+    // Simplification: Keeping the box map for the "Crown" part because it allows clicking specific surfaces clearly.
+    // But we will stylize the outline.
 
     return (
-        <div className="flex flex-col items-center">
-            <div className="text-xs font-bold text-slate-500 mb-1">{id}</div>
-            <svg width="40" height="40" viewBox="0 0 100 100" className="cursor-pointer transition-transform hover:scale-105">
-                {/* Top (Buccal/Lingual) */}
-                <polygon
-                    points="0,0 100,0 70,30 30,30"
-                    fill={getSurfaceColor(surfaces.top)}
-                    stroke="white"
-                    strokeWidth="2"
-                    onClick={() => onSurfaceClick && onSurfaceClick(surfaces.top)}
+        <div className="flex flex-col items-center group relative">
+            <div className="text-xs font-bold text-slate-500 mb-1 absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 bg-white px-1 shadow-sm rounded border border-slate-200">
+                #{id} {type}
+            </div>
+
+            {/* Main Tooth ID Label (Always visible) */}
+            <span className={`text-xs font-semibold mb-0.5 ${hasExtraction ? 'text-red-400 line-through' : 'text-slate-600'}`}>{id}</span>
+
+            <svg width="46" height="60" viewBox="0 0 100 130" className="cursor-pointer">
+                {/* ROOT SECTION */}
+                <path
+                    d={isUpper ? "M 20,40 C 20,0 50,-10 80,40 Z" : "M 20,90 C 20,130 50,140 80,90 Z"}
+                    fill={selectedSurfaces.includes('Root') ? colors.selected : (hasRootCanal ? colors.root : '#e2e8f0')}
+                    stroke="none"
+                    onClick={() => onSurfaceClick && onSurfaceClick('Root')}
                     className="hover:opacity-80 transition-colors"
                 />
-                {/* Bottom (Lingual/Buccal) */}
-                <polygon
-                    points="30,70 70,70 100,100 0,100"
-                    fill={getSurfaceColor(surfaces.bottom)}
-                    stroke="white"
-                    strokeWidth="2"
-                    onClick={() => onSurfaceClick && onSurfaceClick(surfaces.bottom)}
-                    className="hover:opacity-80 transition-colors"
-                />
-                {/* Left (Distal/Mesial) */}
-                <polygon
-                    points="0,0 30,30 30,70 0,100"
-                    fill={getSurfaceColor(surfaces.left)}
-                    stroke="white"
-                    strokeWidth="2"
-                    onClick={() => onSurfaceClick && onSurfaceClick(surfaces.left)}
-                    className="hover:opacity-80 transition-colors"
-                />
-                {/* Right (Mesial/Distal) */}
-                <polygon
-                    points="100,0 100,100 70,70 70,30"
-                    fill={getSurfaceColor(surfaces.right)}
-                    stroke="white"
-                    strokeWidth="2"
-                    onClick={() => onSurfaceClick && onSurfaceClick(surfaces.right)}
-                    className="hover:opacity-80 transition-colors"
-                />
-                {/* Center (Occlusal) */}
-                <rect
-                    x="30" y="30" width="40" height="40"
-                    fill={getSurfaceColor(surfaces.center)}
-                    stroke="white"
-                    strokeWidth="2"
-                    onClick={() => onSurfaceClick && onSurfaceClick(surfaces.center)}
-                    className="hover:opacity-80 transition-colors"
-                />
+
+                {/* CROWN SECTION */}
+                <g transform={isUpper ? "translate(0, 35)" : "translate(0, -5)"}>
+                    {/* Border/Crown Effect */}
+                    {hasCrown && (
+                        <rect x="0" y="0" width="100" height="100" rx="15" fill="none" stroke="#f59e0b" strokeWidth="6" strokeDasharray="5,2" />
+                    )}
+
+                    {/* Surfaces (Standard Box Map for Clarity) */}
+                    {/* Top */}
+                    <polygon points="0,0 100,0 75,25 25,25" fill={getSurfaceColor(surfaces.top)} stroke="white" strokeWidth="1" onClick={() => onSurfaceClick && onSurfaceClick(surfaces.top)} />
+                    {/* Bottom */}
+                    <polygon points="25,75 75,75 100,100 0,100" fill={getSurfaceColor(surfaces.bottom)} stroke="white" strokeWidth="1" onClick={() => onSurfaceClick && onSurfaceClick(surfaces.bottom)} />
+                    {/* Left */}
+                    <polygon points="0,0 25,25 25,75 0,100" fill={getSurfaceColor(surfaces.left)} stroke="white" strokeWidth="1" onClick={() => onSurfaceClick && onSurfaceClick(surfaces.left)} />
+                    {/* Right */}
+                    <polygon points="100,0 100,100 75,75 75,25" fill={getSurfaceColor(surfaces.right)} stroke="white" strokeWidth="1" onClick={() => onSurfaceClick && onSurfaceClick(surfaces.right)} />
+                    {/* Center */}
+                    <rect x="25" y="25" width="50" height="50" fill={getSurfaceColor(surfaces.center)} stroke="white" strokeWidth="1" onClick={() => onSurfaceClick && onSurfaceClick(surfaces.center)} />
+                </g>
+
+                {/* EXTRACTION OVERLAY (Big Red X) */}
+                {hasExtraction && (
+                    <g stroke="red" strokeWidth="4" opacity="0.8">
+                        <line x1="10" y1={isUpper ? 40 : 10} x2="90" y2={isUpper ? 120 : 90} />
+                        <line x1="90" y1={isUpper ? 40 : 10} x2="10" y2={isUpper ? 120 : 90} />
+                    </g>
+                )}
             </svg>
         </div>
     );
