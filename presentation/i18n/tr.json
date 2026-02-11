@@ -13,7 +13,8 @@
         "photos": "Fotoğraf Galerisi",
         "treatmentHistory": "Tedavi Geçmişi",
         "financial": "Finansal Durum",
-        "security": "Güvenlik"
+        "security": "Güvenlik",
+        "communication": "İletişim"
     },
     "common": {
         "save": "Kaydet",

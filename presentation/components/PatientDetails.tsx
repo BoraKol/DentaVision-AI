@@ -10,6 +10,8 @@ import { FinancialProvider } from '../context/FinancialContext';
 import api from '../../infrastructure/services/ApiService';
 import PrescriptionList from './PrescriptionList';
 import PatientFinancials from './PatientFinancials';
+import PatientCommunicationLogs from './PatientCommunicationLogs';
+import { MessageSquare } from 'lucide-react';
 
 interface PatientDetailsProps {
     patient: any;
@@ -17,7 +19,7 @@ interface PatientDetailsProps {
 }
 
 const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
-    const [activeTab, setActiveTab] = useState<'info' | 'photos' | 'treatment' | 'recipes' | 'financial' | 'security'>('treatment');
+    const [activeTab, setActiveTab] = useState<'info' | 'photos' | 'treatment' | 'recipes' | 'financial' | 'communication' | 'security'>('treatment');
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState(patient);
 
@@ -45,6 +47,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
         { id: 'treatment', label: t('app.treatmentHistory'), icon: Activity },
         { id: 'recipes', label: t('app.recipes'), icon: Pill },
         { id: 'financial', label: t('app.financial'), icon: Wallet },
+        { id: 'communication', label: t('app.communication'), icon: MessageSquare },
         { id: 'security', label: t('app.security'), icon: Lock },
     ];
 
@@ -343,6 +346,12 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                             <FinancialProvider>
                                 <PatientFinancials patientId={patientId} />
                             </FinancialProvider>
+                        </div>
+                    )}
+
+                    {activeTab === 'communication' && (
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                            <PatientCommunicationLogs patientId={patientId} />
                         </div>
                     )}
 

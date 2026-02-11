@@ -24,6 +24,7 @@ interface InventoryContextType {
     addItem: (item: Omit<InventoryItem, '_id' | 'lastRestocked'>) => Promise<void>;
     updateItem: (id: string, item: Partial<InventoryItem>) => Promise<void>;
     deleteItem: (id: string) => Promise<void>;
+    addTransaction: (id: string, type: 'IN' | 'OUT' | 'ADJUST', amount: number, note?: string) => Promise<void>;
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
@@ -87,6 +88,19 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
     };
 
+    const addTransaction = async (id: string, type: 'IN' | 'OUT' | 'ADJUST', amount: number, note?: string) => {
+        try {
+            const res = await inventoryAPI.addTransaction(id, { type, amount, note });
+            if (res.data.success) {
+                setItems(items.map(item => item._id === id ? res.data.data : item));
+                addToast('Stok hareketi kaydedildi', 'success');
+            }
+        } catch (error) {
+            console.error('Error adding transaction:', error);
+            addToast('Stok hareketi kaydedilemedi', 'error');
+        }
+    };
+
     useEffect(() => {
         if (user) {
             fetchItems();
@@ -94,7 +108,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }, [user]);
 
     return (
-        <InventoryContext.Provider value={{ items, loading, fetchItems, addItem, updateItem, deleteItem }}>
+        <InventoryContext.Provider value={{ items, loading, fetchItems, addItem, updateItem, deleteItem, addTransaction }}>
             {children}
         </InventoryContext.Provider>
     );

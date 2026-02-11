@@ -34,18 +34,10 @@ const setupReminders = () => {
             for (const appt of appointments) {
                 const patient = await Patient.findById(appt.patientId);
                 
-                if (patient && patient.email) {
-                    console.log(`📧 Sending reminder to ${patient.name} (${patient.email})`);
+                if (patient) {
+                    console.log(`📧/📱 Sending reminder to ${patient.name}`);
                     
-                    const timeString = new Date(appt.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                    
-                    await notificationService.sendAppointmentReminder(
-                        patient.email,
-                        patient.name,
-                        tomorrow.toLocaleDateString('tr-TR'),
-                        timeString,
-                        appt.dentistName || 'Diş Hekiminiz'
-                    );
+                    await notificationService.sendAppointmentReminder(patient, appt);
                 } else {
                     console.log(`⚠️ Patient not found or no email for Appointment ID: ${appt._id}`);
                 }

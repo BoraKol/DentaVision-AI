@@ -81,7 +81,9 @@ export const patientsAPI = {
 
     update: (id: string, data: any) => api.put(`/patients/${id}`, data),
 
-    delete: (id: string) => api.delete(`/patients/${id}`)
+    delete: (id: string) => api.delete(`/patients/${id}`),
+
+    getLogs: (id: string) => api.get(`/patients/${id}/logs`)
 };
 
 // Appointments API
@@ -135,7 +137,8 @@ export const inventoryAPI = {
     getAll: () => api.get('/inventory'),
     create: (data: any) => api.post('/inventory', data),
     update: (id: string, data: any) => api.put(`/inventory/${id}`, data),
-    delete: (id: string) => api.delete(`/inventory/${id}`)
+    delete: (id: string) => api.delete(`/inventory/${id}`),
+    addTransaction: (id: string, data: any) => api.post(`/inventory/${id}/transaction`, data)
 };
 
 // Lab Tracking API
@@ -159,6 +162,12 @@ export const photosAPI = {
         });
     },
     delete: (id: string) => api.delete(`/photos/${id}`)
+};
+
+// E-Nabız API
+export const enabizAPI = {
+    sendTreatment: (data: { patientId: string; treatmentData: any }) => api.post('/enabiz/treatment', data),
+    getLogs: (patientId: string) => api.get(`/enabiz/logs/${patientId}`)
 };
 
 export default api;

@@ -8,8 +8,9 @@ const InventoryItemSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        required: [true, 'Please add a category'], // e.g., 'Consumable', 'Instrument', 'Implant'
-        enum: ['Sarf Malzeme', 'Enstrüman', 'İmplant', 'İlaç', 'Diğer']
+        required: [true, 'Please add a category'],
+        enum: ['Sarf Malzeme', 'Enstrüman', 'Cihaz', 'İlaç', 'Diğer'],
+        default: 'Sarf Malzeme'
     },
     quantity: {
         type: Number,
@@ -18,30 +19,41 @@ const InventoryItemSchema = new mongoose.Schema({
     },
     unit: {
         type: String,
-        required: true, // e.g., 'Box', 'Piece', 'Liter'
-        default: 'Piece'
+        required: true,
+        default: 'Adet' // Box, Piece, Liter
     },
-    minLevel: {
+    minThreshold: {
         type: Number,
-        default: 5 // Alert when quantity matches or drops below this
+        default: 10,
+        help: 'Minimum quantity before alert'
     },
-    cost: {
-        type: Number, // Unit cost
+    costPerUnit: {
+        type: Number,
         default: 0
     },
-    supplier: {
-        type: String,
-        trim: true
-    },
-    expirationDate: {
+    expiryDate: {
         type: Date
     },
-    lastRestocked: {
-        type: Date,
-        default: Date.now
-    },
-    notes: {
-        type: String
+    transactions: [{
+        type: {
+            type: String,
+            enum: ['IN', 'OUT', 'ADJUST'],
+            required: true
+        },
+        amount: {
+            type: Number,
+            required: true
+        },
+        date: {
+            type: Date,
+            default: Date.now
+        },
+        note: String
+    }],
+    clinicId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        // required: true // Open for now to avoid breaking existing data if any
     }
 }, {
     timestamps: true

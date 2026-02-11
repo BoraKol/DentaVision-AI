@@ -5,19 +5,26 @@ const {
     getInventoryItem,
     createInventoryItem,
     updateInventoryItem,
-    deleteInventoryItem
+    deleteInventoryItem,
+    addTransaction
 } = require('../controllers/inventoryController');
 
 const validate = require('../middleware/validate');
 const { createInventoryItemSchema, updateInventoryItemSchema } = require('../validators/inventoryValidator');
+const { protect, authorize } = require('../middleware/auth');
+
+router.use(protect); // All inventory routes need protection
 
 router.route('/')
     .get(getInventoryItems)
-    .post(validate(createInventoryItemSchema), createInventoryItem);
+    .post(authorize('admin', 'doctor'), validate(createInventoryItemSchema), createInventoryItem);
 
 router.route('/:id')
     .get(getInventoryItem)
-    .put(validate(updateInventoryItemSchema), updateInventoryItem)
-    .delete(deleteInventoryItem);
+    .put(authorize('admin', 'doctor'), validate(updateInventoryItemSchema), updateInventoryItem)
+    .delete(authorize('admin'), deleteInventoryItem);
+
+router.route('/:id/transaction')
+    .post(addTransaction);
 
 module.exports = router;

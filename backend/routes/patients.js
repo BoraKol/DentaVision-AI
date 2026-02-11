@@ -12,6 +12,17 @@ const {
 // All routes are protected
 router.use(protect);
 
+const CommunicationLog = require('../models/CommunicationLog');
+
+router.get('/:id/logs', async (req, res) => {
+    try {
+        const logs = await CommunicationLog.find({ patientId: req.params.id }).sort({ sentAt: -1 });
+        res.status(200).json({ success: true, count: logs.length, data: logs });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 router.route('/')
     .get(getPatients)
     .post(createPatient);

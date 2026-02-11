@@ -1,48 +1,46 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   FileText, Plus, CheckCircle,
-  AlertTriangle, Trash2
+  AlertTriangle, Trash2, UploadCloud,
+  Search, User as UserIcon, Sparkles
 } from 'lucide-react';
-import { TreatmentItem, TreatmentPhase } from '../../core/domain/entities/TreatmentPlan';
-import { useTreatment } from '../context/TreatmentContext';
-import { useToast } from '../context/ToastContext';
-import { useLanguage } from '../context/LanguageContext';
-import { usePatient } from '../context/PatientContext';
+import { TreatmentPhase } from '../../core/domain/entities/TreatmentPlan';
+import { useTreatmentPlan } from '../hooks/useTreatmentPlan';
 import Odontogram from './odontogram/Odontogram';
 import { AITreatmentModal } from './treatment/AITreatmentModal';
-import { Search, User as UserIcon, Sparkles } from 'lucide-react';
+import TreatmentItemCard from './TreatmentItemCard';
 
 interface TreatmentPlanProps {
   patientId?: string;
 }
 
 const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatientId }) => {
-  const { items, addItem, deleteItem, updateItemStatus, fetchTreatments, loading } = useTreatment();
-  const { patients, selectedPatient, selectPatient } = usePatient();
-  const { addToast } = useToast();
-  const { t, language } = useLanguage();
-
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showPatientResults, setShowPatientResults] = useState(false);
-  const [newItem, setNewItem] = useState<Partial<TreatmentItem>>({
-    phase: 'restorative',
-    status: 'pending'
-  });
-
-  const activePatient = selectedPatient || (initialPatientId ? patients.find(p => p.id === initialPatientId) : null);
-  const patientId = activePatient?.id;
-
-  React.useEffect(() => {
-    if (patientId) {
-      fetchTreatments(patientId);
-    }
-  }, [patientId]);
-
-  const filteredPatients = patients.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ).slice(0, 5);
+  const {
+    items,
+    activePatient,
+    patientId,
+    searchTerm,
+    setSearchTerm,
+    showPatientResults,
+    setShowPatientResults,
+    filteredPatients,
+    isAddModalOpen,
+    setIsAddModalOpen,
+    isAIModalOpen,
+    setIsAIModalOpen,
+    newItem,
+    setNewItem,
+    isSendingENabiz,
+    selectPatient,
+    addItem,
+    handleAddItem,
+    handleDeleteItem,
+    handleSendENabiz,
+    updateItemStatus,
+    addToast,
+    t,
+    language
+  } = useTreatmentPlan(initialPatientId);
 
   const phases: { id: TreatmentPhase; labelKey: string; color: string; icon: any }[] = [
     { id: 'urgent', labelKey: 'treatment.urgent', color: 'bg-red-50 text-red-700 border-red-200', icon: AlertTriangle },
@@ -57,44 +55,6 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
       maintenance: { tr: 'Faz 3: İdame / Estetik', en: 'Phase 3: Maintenance / Aesthetic' }
     };
     return phaseLabels[phase][language as 'tr' | 'en'] || phaseLabels[phase].en;
-  };
-
-  const handleAddItem = () => {
-    if (!newItem.procedureName) {
-      addToast(language === 'tr' ? 'Lütfen işlem adı girin.' : 'Please enter procedure name.', 'warning');
-      return;
-    }
-
-    if (!patientId) {
-      addToast(language === 'tr' ? 'Lütfen önce bir hasta seçin.' : 'Please select a patient first.', 'warning');
-      return;
-    }
-
-    addItem(patientId, {
-      procedureName: newItem.procedureName,
-      toothNumber: newItem.toothNumber,
-      phase: newItem.phase as TreatmentPhase,
-      cost: newItem.cost
-    });
-
-    addToast(
-      language === 'tr'
-        ? `"${newItem.procedureName}" tedavi planına eklendi.`
-        : `"${newItem.procedureName}" added to treatment plan.`,
-      'success'
-    );
-    setIsAddModalOpen(false);
-    setNewItem({ phase: 'restorative', status: 'pending' });
-  };
-
-  const handleDeleteItem = (id: string, name: string) => {
-    deleteItem(id);
-    addToast(
-      language === 'tr'
-        ? `"${name}" tedavi planından silindi.`
-        : `"${name}" removed from treatment plan.`,
-      'info'
-    );
   };
 
   const formatCurrency = (amount: number) => {
@@ -201,6 +161,18 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
             <Sparkles className="w-5 h-5 mr-2" />
             {language === 'tr' ? 'AI Öneri' : 'AI Suggest'}
           </button>
+
+          {/* 4. E-Nabız (Conditional) */}
+          {patientId && items.length > 0 && (
+            <button
+              onClick={handleSendENabiz}
+              disabled={isSendingENabiz}
+              className="order-4 flex items-center justify-center px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-md w-full border border-red-500/30 active:scale-95 font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <UploadCloud className="w-5 h-5 mr-2" />
+              {isSendingENabiz ? (language === 'tr' ? 'Gönderiliyor...' : 'Sending...') : (language === 'tr' ? 'E-Nabız Gönder' : 'Send to E-Nabız')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -268,49 +240,15 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId: initialPatient
                   {/* Items List */}
                   <div className="flex-1 p-4 space-y-3 overflow-y-auto custom-scrollbar">
                     {items.filter(i => i.phase === phase.id).map((item) => (
-                      <div key={item.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow group">
-                        <div className="flex justify-between items-start gap-4 mb-3">
-                          <div className="flex items-start space-x-3 overflow-hidden">
-                            {item.toothNumber && (
-                              <span className="min-w-[1.75rem] h-6 w-auto px-1.5 flex items-center justify-center bg-slate-100 text-slate-600 text-xs font-bold rounded shrink-0">
-                                {item.toothNumber}
-                              </span>
-                            )}
-                            <h4 className="font-medium text-slate-800 break-words leading-tight">{item.procedureName}</h4>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteItem(item.id, item.procedureName)}
-                            className="text-slate-300 hover:text-red-500 transition-colors p-1 -m-1 shrink-0"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-slate-500 mt-4 pt-3 border-t border-slate-50">
-                          <div className="flex items-center">
-                            <select
-                              value={item.status}
-                              onChange={(e) => updateItemStatus(item.id, e.target.value)}
-                              className={`px-2 py-1.5 rounded-md border-0 ring-1 ring-inset ${item.status === 'completed' ? 'bg-green-50 ring-green-200 text-green-700' :
-                                item.status === 'in_progress' ? 'bg-blue-50 ring-blue-200 text-blue-700' :
-                                  'bg-slate-50 ring-slate-200 text-slate-600'
-                                } text-[10px] uppercase tracking-wider font-bold cursor-pointer focus:ring-2 focus:ring-teal-600 outline-none`}
-                            >
-                              <option value="pending">{t('treatment.pending')}</option>
-                              <option value="in_progress">{t('treatment.inProgress')}</option>
-                              <option value="completed">{t('appointment.completed')}</option>
-                            </select>
-                          </div>
-                          {item.cost && (
-                            <div className="flex flex-col items-end">
-                              <span className="text-[10px] text-slate-400 uppercase tracking-tighter mb-0.5">{t('treatment.cost')}</span>
-                              <span className="font-mono font-bold text-slate-700 text-sm">
-                                {formatCurrency(item.cost)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      <TreatmentItemCard
+                        key={item.id}
+                        item={item}
+                        onDelete={handleDeleteItem}
+                        onStatusChange={updateItemStatus}
+                        formatCurrency={formatCurrency}
+                        t={t}
+                        language={language}
+                      />
                     ))}
 
                     {items.filter(i => i.phase === phase.id).length === 0 && (

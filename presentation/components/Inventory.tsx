@@ -76,6 +76,31 @@ const Inventory: React.FC = () => {
         resetForm();
     };
 
+    // Transaction State
+    const [showTransactionModal, setShowTransactionModal] = useState(false);
+    const [transactionType, setTransactionType] = useState<'IN' | 'OUT'>('IN');
+    const [transactionItem, setTransactionItem] = useState<any>(null);
+    const [transactionAmount, setTransactionAmount] = useState(1);
+    const [transactionNote, setTransactionNote] = useState('');
+
+    const { addTransaction } = useInventory();
+
+    const openTransactionModal = (item: any, type: 'IN' | 'OUT') => {
+        setTransactionItem(item);
+        setTransactionType(type);
+        setTransactionAmount(1);
+        setTransactionNote('');
+        setShowTransactionModal(true);
+    };
+
+    const handleTransactionSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (transactionItem) {
+            await addTransaction(transactionItem._id, transactionType, transactionAmount, transactionNote);
+            setShowTransactionModal(false);
+        }
+    };
+
     const handleEdit = (item: any) => {
         setEditingItem(item);
         setFormData({
@@ -195,6 +220,21 @@ const Inventory: React.FC = () => {
                                 </td>
                                 <td className="p-1.5 md:p-4 text-right">
                                     <div className="flex justify-end gap-1 md:gap-2">
+                                        <button
+                                            onClick={() => openTransactionModal(item, 'IN')}
+                                            className="p-1.5 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded"
+                                            title={language === 'tr' ? 'Stok Ekle' : 'Add Stock'}
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => openTransactionModal(item, 'OUT')}
+                                            className="p-1.5 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded"
+                                            title={language === 'tr' ? 'Stok Düş' : 'Consume Stock'}
+                                        >
+                                            <div className="w-4 h-4 flex items-center justify-center font-bold text-lg leading-none">-</div>
+                                        </button>
+                                        <div className="w-px h-4 bg-slate-200 my-auto mx-1"></div>
                                         <button
                                             onClick={() => handleEdit(item)}
                                             className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded"
@@ -333,6 +373,68 @@ const Inventory: React.FC = () => {
                                     className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm"
                                 >
                                     {editingItem ? (language === 'tr' ? 'Güncelle' : 'Update') : (language === 'tr' ? 'Kaydet' : 'Save')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Transaction Modal */}
+            {showTransactionModal && transactionItem && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100">
+                            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                {transactionType === 'IN'
+                                    ? <Plus className="w-5 h-5 text-green-600" />
+                                    : <div className="w-5 h-5 flex items-center justify-center font-bold text-lg leading-none text-orange-600">-</div>}
+                                {transactionType === 'IN'
+                                    ? (language === 'tr' ? 'Stok Ekle' : 'Add Stock')
+                                    : (language === 'tr' ? 'Stok Düş' : 'Consume Stock')}
+                            </h2>
+                            <p className="text-sm text-slate-500 mt-1">{transactionItem.name}</p>
+                        </div>
+                        <form onSubmit={handleTransactionSubmit} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {language === 'tr' ? 'Miktar' : 'Quantity'} ({transactionItem.unit})
+                                </label>
+                                <input
+                                    required
+                                    type="number"
+                                    min="1"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-lg font-semibold"
+                                    value={transactionAmount}
+                                    onChange={e => setTransactionAmount(parseInt(e.target.value) || 0)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {language === 'tr' ? 'Not (Opsiyonel)' : 'Note (Optional)'}
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    placeholder={language === 'tr' ? 'Örn: Sipariş geldi / Kullanıldı' : 'e.g., Restocked / Used for patient'}
+                                    value={transactionNote}
+                                    onChange={e => setTransactionNote(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 mt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTransactionModal(false)}
+                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                                >
+                                    {language === 'tr' ? 'İptal' : 'Cancel'}
+                                </button>
+                                <button
+                                    type="submit"
+                                    className={`px-4 py-2 text-white rounded-lg shadow-sm ${transactionType === 'IN' ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+                                        }`}
+                                >
+                                    {language === 'tr' ? 'Kaydet' : 'Confirm'}
                                 </button>
                             </div>
                         </form>

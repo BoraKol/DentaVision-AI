@@ -13,7 +13,8 @@
         "photos": "Photo Gallery",
         "treatmentHistory": "Treatment History",
         "financial": "Financial Status",
-        "security": "Security"
+        "security": "Security",
+        "communication": "Communication"
     },
     "common": {
         "save": "Save",

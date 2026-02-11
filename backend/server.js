@@ -79,6 +79,7 @@ app.use('/api/prescriptions', require('./routes/prescriptions'));
 app.use('/api/inventory', require('./routes/inventory'));
 app.use('/api/lab-jobs', require('./routes/labJobs'));
 app.use('/api/portal', require('./routes/patientPortal'));
+app.use('/api/enabiz', require('./routes/enabiz'));
 
 // Health check
 app.get('/api/health', (req, res) => {
