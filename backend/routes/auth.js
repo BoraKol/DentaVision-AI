@@ -8,9 +8,12 @@ const {
     updateProfile
 } = require('../controllers/authController');
 
-router.post('/register', register);
-router.post('/login', login);
+const { registerSchema, loginSchema, updateProfileSchema } = require('../validations/authValidation');
+const validate = require('../middleware/validate');
+
+router.post('/register', validate(registerSchema), register);
+router.post('/login', validate(loginSchema), login);
 router.get('/me', protect, getMe);
-router.put('/me', protect, updateProfile);
+router.put('/me', protect, validate(updateProfileSchema), updateProfile);
 
 module.exports = router;

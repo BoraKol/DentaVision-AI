@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const AppError = require('../utils/AppError');
 
 const validate = (schema) => (req, res, next) => {
     // Determine what to validate based on schema structure
@@ -12,10 +13,7 @@ const validate = (schema) => (req, res, next) => {
 
     if (error) {
         const errorMessage = error.details.map(detail => detail.message).join(', ');
-        return res.status(400).json({
-            success: false,
-            error: errorMessage
-        });
+        return next(new AppError(errorMessage, 400));
     }
 
     // Replace req.body with validated value (coerced types, stripped fields)

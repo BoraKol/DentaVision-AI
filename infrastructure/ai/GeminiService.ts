@@ -53,6 +53,8 @@ export class GeminiService implements IAIAnalysisService {
                 contents: prompt,
                 config: {
                     temperature: 0,
+                    topP: 0.1,
+                    topK: 1,
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.OBJECT,
@@ -95,21 +97,21 @@ export class GeminiService implements IAIAnalysisService {
 
     async analyzeRadiograph(base64Image: string): Promise<ImageAnalysisResult> {
         const prompt = `
-      Role: DentaVision AI (Türkçe Radyografi Analiz Uzmanı).
-      Task: Bu dental radyografiyi detaylıca yorumla. Anomalileri tespit et (Çürük, kemik kaybı, lezyonlar, gömülü dişler).
+      Role: DentaVision AI (Kıdemli Radyoloji Uzmanı).
+      Task: Bu dental radyografiyi klinik hassasiyetle analiz et.
       
-      Yönergeler:
-      - 'bed', 'chair', 'tv', 'person' gibi diş hekimliği ile alakasız veya absürt nesne tespitlerini KESİNLİKLE YOKSAY.
-      - Sadece radyografik ve anatomik yapıları analiz et.
-      - Spesifik diş numarası vererek konuş (FDI notasyonu: 11-48).
-      - Bulguları "diş numarası - sorun" şeklinde listele.
-      - Profesyonel Türkçe diş hekimliği terminolojisi kullan.
+      Yönergeler (KESİN UY):
+      1. Sadece radyografik bulguları raporla (bed, chair, tv gibi nesneleri KESİNLİKLE YOKSAY).
+      2. Önce görsel kanıtı (radyolusens, radyoopak alanlar, periodontal aralıklar) tespit et.
+      3. Tespit ettiğin her bulgu için spesifik FDI diş numarası belirt (11-48).
+      4. Bulguları klinik ciddiyetine göre 1-5 arası puanla.
+      5. Analiz sırasında her zaman aynı görsel özellikleri aynı şekilde yorumla.
 
       Çıktı JSON formatı:
-      - findings: Görsel gözlemler listesi (Örn: "46 nolu dişte distal radyolusens").
-      - diagnosis: Klinik sonuç/Teşhis.
-      - urgency: 1-5.
-      - recommendations: Önerilen sonraki adımlar (Örn: "Vitalite testi", "Kanal tedavisi").
+      - findings: ["46 nolu dişte derin distal radyolusite", "18 nolu gömülü diş"]
+      - diagnosis: Toplu klinik sonuç cümlesi.
+      - urgency: 1-5 (Aciliyet).
+      - recommendations: ["46 kanal tedavisi", "18 çekim"]
       - icd_10_codes: İlgili kodlar.
     `;
 
@@ -134,7 +136,9 @@ export class GeminiService implements IAIAnalysisService {
                             icd_10_codes: { type: Type.ARRAY, items: { type: Type.STRING } }
                         }
                     },
-                    temperature: 0
+                    temperature: 0,
+                    topP: 0.1,
+                    topK: 1
                 }
             });
 
@@ -179,7 +183,12 @@ export class GeminiService implements IAIAnalysisService {
             const response = await this.client.models.generateContent({
                 model: APP_CONSTANTS.MODELS.TEXT,
                 contents: prompt,
-                config: { responseMimeType: "application/json" }
+                config: {
+                    responseMimeType: "application/json",
+                    temperature: 0,
+                    topP: 0.1,
+                    topK: 1
+                }
             });
             return JSON.parse(response.text || "{}");
         } catch (error: any) {
@@ -225,7 +234,12 @@ export class GeminiService implements IAIAnalysisService {
             const response = await this.client.models.generateContent({
                 model: APP_CONSTANTS.MODELS.TEXT,
                 contents: prompt,
-                config: { responseMimeType: "application/json" }
+                config: {
+                    responseMimeType: "application/json",
+                    temperature: 0,
+                    topP: 0.1,
+                    topK: 1
+                }
             });
             return JSON.parse(response.text || "{}");
         } catch (error) {
@@ -276,7 +290,9 @@ export class GeminiService implements IAIAnalysisService {
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
-                    temperature: 0
+                    temperature: 0,
+                    topP: 0.1,
+                    topK: 1
                 }
             });
             return JSON.parse(response.text || "{}");

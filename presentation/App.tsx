@@ -14,20 +14,15 @@ import {
     ArrowLeft,
     PieChart,
     FlaskConical,
-    LogOut
+    LogOut,
+    Package
 } from 'lucide-react';
-import Dashboard from './components/Dashboard';
-import PatientIntake from './components/PatientIntake';
-import ImagingAnalysis from './components/ImagingAnalysis';
-import TreatmentPlan from './components/TreatmentPlan';
-import ProfileSettings from './components/ProfileSettings';
-import PatientList from './components/PatientList';
-import Calendar from './components/Calendar';
 import LanguageToggle from './components/LanguageToggle';
 import ThemeToggle from './components/ThemeToggle';
 import Disclaimer from './components/Disclaimer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NetworkStatus } from './components/NetworkStatus';
+import LoginPage from './pages/LoginPage';
 import { notificationService } from './services/PushNotificationService';
 import { UserProvider, useUser } from './context/UserContext';
 import { TreatmentProvider } from './context/TreatmentContext';
@@ -38,17 +33,22 @@ import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import LoginPage from './pages/LoginPage';
-import PatientDetails from './components/PatientDetails';
-import FinancialDashboard from './components/FinancialDashboard';
 import { PrescriptionProvider } from './context/PrescriptionContext';
-// import ReportPreview from './components/ReportPreview'; // Removed as file is missing
-import PatientLogin from './pages/portal/PatientLogin';
-import PatientDashboard from './pages/portal/PatientDashboard';
-import Inventory from './components/Inventory';
-import LabTracking from './components/LabTracking';
 import { InventoryProvider } from './context/InventoryContext';
-import { Package } from 'lucide-react';
+
+const Dashboard = React.lazy(() => import('./components/Dashboard'));
+const PatientIntake = React.lazy(() => import('./components/PatientIntake'));
+const ImagingAnalysis = React.lazy(() => import('./components/ImagingAnalysis'));
+const TreatmentPlan = React.lazy(() => import('./components/TreatmentPlan'));
+const ProfileSettings = React.lazy(() => import('./components/ProfileSettings'));
+const PatientList = React.lazy(() => import('./components/PatientList'));
+const Calendar = React.lazy(() => import('./components/Calendar'));
+const PatientDetails = React.lazy(() => import('./components/PatientDetails'));
+const FinancialDashboard = React.lazy(() => import('./components/FinancialDashboard'));
+const PatientLogin = React.lazy(() => import('./pages/portal/PatientLogin'));
+const PatientDashboard = React.lazy(() => import('./pages/portal/PatientDashboard'));
+const Inventory = React.lazy(() => import('./components/Inventory'));
+const LabTracking = React.lazy(() => import('./components/LabTracking'));
 
 enum View {
     DASHBOARD = 'DASHBOARD',
@@ -305,9 +305,15 @@ const AppContent: React.FC = () => {
                 {/* Scrollable Area */}
                 <div className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-8 pb-8 lg:pb-8 mb-[env(safe-area-inset-bottom)]">
                     <ErrorBoundary>
-                        <div className="max-w-7xl mx-auto space-y-6">
-                            {renderContent()}
-                        </div>
+                        <React.Suspense fallback={
+                            <div className="flex items-center justify-center p-12">
+                                <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        }>
+                            <div className="max-w-7xl mx-auto space-y-6">
+                                {renderContent()}
+                            </div>
+                        </React.Suspense>
                     </ErrorBoundary>
                     <Disclaimer />
                 </div>
@@ -367,14 +373,20 @@ const App: React.FC = () => (
         <LanguageProvider>
             <ToastProvider>
                 <AuthProvider>
-                    <Routes>
-                        {/* Patient Portal Routes */}
-                        <Route path="/portal/login" element={<PatientLogin />} />
-                        <Route path="/portal/dashboard" element={<PatientDashboard />} />
+                    <React.Suspense fallback={
+                        <div className="min-h-screen flex items-center justify-center bg-teal-600">
+                            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    }>
+                        <Routes>
+                            {/* Patient Portal Routes */}
+                            <Route path="/portal/login" element={<PatientLogin />} />
+                            <Route path="/portal/dashboard" element={<PatientDashboard />} />
 
-                        {/* Main Application with Sidebar */}
-                        <Route path="/*" element={<AuthenticatedApp />} />
-                    </Routes>
+                            {/* Main Application with Sidebar */}
+                            <Route path="/*" element={<AuthenticatedApp />} />
+                        </Routes>
+                    </React.Suspense>
                 </AuthProvider>
             </ToastProvider>
         </LanguageProvider>

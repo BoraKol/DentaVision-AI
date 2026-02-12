@@ -63,7 +63,16 @@ const limiter = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 mins
     max: 100 // 100 requests per window
 });
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 mins
+    max: 20, // 20 requests per window
+    message: 'Too many login attempts from this IP, please try again after 15 minutes'
+});
+
 app.use('/api', limiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

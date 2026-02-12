@@ -1,18 +1,16 @@
-const Patient = require('../models/Patient');
+const patientRepository = require('../repositories/PatientRepository');
 
 class PatientService {
     async getAllPatients(clinicName) {
-        return await Patient.find({ clinicName })
-            .populate('userId', 'name title')
-            .sort({ createdAt: -1 });
+        return await patientRepository.findWithUserDetails(clinicName);
     }
 
     async getPatientById(id, clinicName) {
-        return await Patient.findOne({ _id: id, clinicName });
+        return await patientRepository.findOne({ _id: id, clinicName });
     }
 
     async createPatient(data, user) {
-        return await Patient.create({
+        return await patientRepository.create({
             ...data,
             userId: user._id,
             clinicName: user.clinicName
@@ -20,7 +18,7 @@ class PatientService {
     }
 
     async updatePatient(id, clinicName, data) {
-        const patient = await Patient.findOne({ _id: id, clinicName });
+        const patient = await patientRepository.findOne({ _id: id, clinicName });
         if (!patient) {
             return null;
         }
@@ -34,7 +32,7 @@ class PatientService {
     }
 
     async deletePatient(id, userId) {
-        return await Patient.findOneAndDelete({ _id: id, userId });
+        return await patientRepository.delete({ _id: id, userId });
     }
 }
 

@@ -29,3 +29,20 @@ uploads/
 *.njsproj
 *.sln
 *.sw?
+
+# Security & Keys
+**/*/google-services.json
+**/*.pem
+**/*.key
+**/*.pub
+**/*.p12
+**/*.keystore
+**/*.jks
+secrets.json
+firebase-adminsdk.json
+
+# Build results
+android/app/build
+android/build
+ios/Pods
+ios/build

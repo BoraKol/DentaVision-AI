@@ -1,6 +1,7 @@
 const patientService = require('../services/patientService');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const CommunicationLog = require('../models/CommunicationLog');
 
 // @desc    Get all patients
 // @route   GET /api/patients
@@ -51,10 +52,23 @@ const deletePatient = catchAsync(async (req, res, next) => {
     res.json({ message: 'Patient deleted successfully' });
 });
 
+// @desc    Get communication logs for a patient
+// @route   GET /api/patients/:id/communication-logs
+// @access  Private
+const getCommunicationLogs = catchAsync(async (req, res, next) => {
+    const logs = await CommunicationLog.find({ patientId: req.params.id }).sort({ sentAt: -1 });
+    res.json({
+        success: true,
+        count: logs.length,
+        data: logs
+    });
+});
+
 module.exports = {
     getPatients,
     getPatient,
     createPatient,
     updatePatient,
-    deletePatient
+    deletePatient,
+    getCommunicationLogs
 };
