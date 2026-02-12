@@ -89,8 +89,13 @@ export class GeminiService implements IAIAnalysisService {
             });
 
             return JSON.parse(response.text || "{}");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Gemini Analysis Error:", error);
+
+            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
+                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
+                localStorage.removeItem('denta_vision_gemini_key');
+            }
             throw error;
         }
     }
@@ -143,8 +148,13 @@ export class GeminiService implements IAIAnalysisService {
             });
 
             return JSON.parse(response.text || "{}");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Gemini Vision Error:", error);
+
+            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
+                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
+                localStorage.removeItem('denta_vision_gemini_key');
+            }
             throw error;
         }
     }
@@ -194,6 +204,12 @@ export class GeminiService implements IAIAnalysisService {
         } catch (error: any) {
             console.error("Briefing Error:", error);
 
+            // Self-Healing: If API key is invalid/expired, clear local storage to fallback to env var
+            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
+                console.warn("⚠️ Invalid API Key detected. Clearing local override to use environment variable.");
+                localStorage.removeItem('denta_vision_gemini_key');
+            }
+
             if (error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED') {
                 console.warn("Gemini API limit reached, returning fallback briefing");
                 return {
@@ -242,8 +258,13 @@ export class GeminiService implements IAIAnalysisService {
                 }
             });
             return JSON.parse(response.text || "{}");
-        } catch (error) {
+        } catch (error: any) {
             console.error("AI Prescription Suggestion Error:", error);
+
+            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
+                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
+                localStorage.removeItem('denta_vision_gemini_key');
+            }
             return { drugs: [], notes: "Öneri şu an oluşturulamadı." };
         }
     }
@@ -290,14 +311,41 @@ export class GeminiService implements IAIAnalysisService {
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            treatment_items: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        procedureName: { type: Type.STRING },
+                                        toothNumber: { type: Type.STRING },
+                                        phase: { type: Type.STRING, enum: ["urgent", "restorative", "maintenance"] },
+                                        cost: { type: Type.NUMBER },
+                                        rationale: { type: Type.STRING }
+                                    },
+                                    required: ["procedureName", "phase", "cost", "rationale"]
+                                }
+                            },
+                            summary: { type: Type.STRING }
+                        },
+                        required: ["treatment_items", "summary"]
+                    },
                     temperature: 0,
                     topP: 0.1,
                     topK: 1
                 }
             });
             return JSON.parse(response.text || "{}");
-        } catch (error) {
+        } catch (error: any) {
             console.error("AI Treatment Plan Generation Error:", error);
+
+            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
+                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
+                localStorage.removeItem('denta_vision_gemini_key');
+            }
+
             return {
                 treatment_items: [],
                 summary: "Tedavi planı oluşturulamadı. Lütfen manuel giriş yapın."
