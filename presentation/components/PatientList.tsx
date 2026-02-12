@@ -91,18 +91,33 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
             return;
         }
 
+        // Prepare data for API
+        const apiData: any = {
+            ...formData,
+            medicalHistory: formData.history, // Map history to backend field
+            // password: only include if not empty
+        };
+
+        if (!apiData.password) {
+            delete apiData.password;
+        }
+
+        // Remove frontend-only fields
+        delete apiData.history;
+
         try {
             if (editingPatient) {
-                await updatePatient(editingPatient.id, formData);
+                await updatePatient(editingPatient.id, apiData);
                 addToast(labels.patientUpdated, 'success');
             } else {
-                await addPatient(formData as any);
+                await addPatient(apiData);
                 addToast(labels.patientCreated, 'success');
             }
             onClose();
-        } catch (error) {
-            console.error(error);
-            addToast(language === 'tr' ? 'İşlem başarısız.' : 'Operation failed.', 'error');
+        } catch (error: any) {
+            console.error("Patient Operation Error:", error);
+            const errorMessage = error.response?.data?.message || error.message || (language === 'tr' ? 'İşlem başarısız.' : 'Operation failed.');
+            addToast(errorMessage, 'error');
         }
     };
 
