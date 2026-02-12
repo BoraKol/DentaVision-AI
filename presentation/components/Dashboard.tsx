@@ -129,9 +129,9 @@ const DashboardContent: React.FC<DashboardProps> = React.memo(({ onViewChange })
                                 {(briefing?.patients || []).map((patient: any, idx: number) => (
                                     <GlassCard key={idx} className="!p-0 overflow-hidden border border-slate-200/50">
                                         <div className="flex flex-col sm:flex-row sm:items-center p-5 gap-4">
-                                            <div className="flex-none w-16 h-16 rounded-xl bg-slate-100 flex flex-col items-center justify-center border border-slate-200">
-                                                <span className="text-lg font-bold text-slate-800">{patient.time.split(':')[0]}</span>
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{patient.time.split(':')[1]}</span>
+                                            <div className="flex-none w-16 h-16 rounded-xl bg-gradient-to-br from-teal-50 to-teal-100 flex flex-col items-center justify-center border border-teal-200 shadow-sm">
+                                                <span className="text-lg font-bold text-teal-700">{patient.time.split(':')[0]}</span>
+                                                <span className="text-[10px] font-bold text-teal-600 uppercase tracking-tighter">{patient.time.split(':')[1]}</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2 mb-1">

@@ -163,6 +163,9 @@ const PatientIntakeContent: React.FC = () => {
                             placeholder={labels.passwordPlaceholder}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
                         />
+                        <p className="text-xs text-slate-500 mt-1">
+                            {language === 'tr' ? 'Hastanın portal üzerinden sonuçlarına erişebilmesi için gereklidir.' : 'Required for patient to access their results via the portal.'}
+                        </p>
                     </div>
 
                     {status === 'ERROR' && (

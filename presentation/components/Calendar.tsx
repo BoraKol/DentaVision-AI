@@ -55,8 +55,11 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         status: 'scheduled' as AppointmentStatus
     });
 
+    const [activeTab, setActiveTab] = useState<'details' | 'history' | 'radiographs'>('details');
+
     React.useEffect(() => {
         if (editingAppointment) {
+            setActiveTab('details');
             setFormData({
                 patientId: editingAppointment.patientId,
                 date: toDateString(new Date(editingAppointment.date)),
@@ -144,99 +147,187 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* ... (existing form fields remain same) ... */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                                {t('patient.name')} <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                value={formData.patientId}
-                                onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                            >
-                                <option value="">{t('appointment.selectPatient')}</option>
-                                {patients.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.date')}</label>
-                                <input
-                                    type="date"
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.time')}</label>
-                                <input
-                                    type="time"
-                                    value={formData.time}
-                                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.duration')}</label>
-                                <select
-                                    value={formData.duration}
-                                    onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                        {editingAppointment && formData.patientId && (
+                            <div className="flex border-b border-slate-200 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('details')}
+                                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'details' ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                                 >
-                                    <option value={15}>15 {t('common.minutes')}</option>
-                                    <option value={30}>30 {t('common.minutes')}</option>
-                                    <option value={45}>45 {t('common.minutes')}</option>
-                                    <option value={60}>1 {t('common.hour')}</option>
-                                    <option value={90}>1.5 {t('common.hours')}</option>
-                                    <option value={120}>2 {t('common.hours')}</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.status')}</label>
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value as AppointmentStatus })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    {t('common.details') || 'Details'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('history')}
+                                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'history' ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                                 >
-                                    <option value="scheduled">{t('appointment.scheduled')}</option>
-                                    <option value="confirmed">{t('appointment.confirmed')}</option>
-                                    <option value="completed">{t('appointment.completed')}</option>
-                                    <option value="cancelled">{t('appointment.cancelled')}</option>
-                                </select>
+                                    {t('patient.history') || 'Patient History'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('radiographs')}
+                                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'radiographs' ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    {t('patient.radiographs') || 'Radiographs'}
+                                </button>
                             </div>
-                        </div>
+                        )}
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                                {t('appointment.procedure')} <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.procedure}
-                                onChange={(e) => setFormData({ ...formData, procedure: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                placeholder={t('appointment.procedurePlaceholder')}
-                            />
-                        </div>
+                        {activeTab === 'details' ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        {t('patient.name')} <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={formData.patientId}
+                                        onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    >
+                                        <option value="">{t('appointment.selectPatient')}</option>
+                                        {patients.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.notes')}</label>
-                            <textarea
-                                value={formData.notes}
-                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                rows={2}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                placeholder={t('appointment.notesPlaceholder')}
-                            />
-                        </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.date')}</label>
+                                        <input
+                                            type="date"
+                                            value={formData.date}
+                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.time')}</label>
+                                        <input
+                                            type="time"
+                                            value={formData.time}
+                                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        />
+                                    </div>
+                                </div>
 
-                        <div className="flex justify-between pt-4 gap-3">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.duration')}</label>
+                                        <select
+                                            value={formData.duration}
+                                            onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        >
+                                            <option value={15}>15 {t('common.minutes')}</option>
+                                            <option value={30}>30 {t('common.minutes')}</option>
+                                            <option value={45}>45 {t('common.minutes')}</option>
+                                            <option value={60}>1 {t('common.hour')}</option>
+                                            <option value={90}>1.5 {t('common.hours')}</option>
+                                            <option value={120}>2 {t('common.hours')}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.status')}</label>
+                                        <select
+                                            value={formData.status}
+                                            onChange={(e) => setFormData({ ...formData, status: e.target.value as AppointmentStatus })}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        >
+                                            <option value="scheduled">{t('appointment.scheduled')}</option>
+                                            <option value="confirmed">{t('appointment.confirmed')}</option>
+                                            <option value="completed">{t('appointment.completed')}</option>
+                                            <option value="cancelled">{t('appointment.cancelled')}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        {t('appointment.procedure')} <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.procedure}
+                                        onChange={(e) => setFormData({ ...formData, procedure: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        placeholder={t('appointment.procedurePlaceholder')}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('appointment.notes')}</label>
+                                    <textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        rows={2}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        placeholder={t('appointment.notesPlaceholder')}
+                                    />
+                                </div>
+                            </div>
+                        ) : activeTab === 'history' ? (
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                                {(() => {
+                                    const patient = patients.find(p => p.id === formData.patientId);
+                                    if (!patient) return <p className="text-slate-500 italic">Patient not found.</p>;
+                                    return (
+                                        <>
+                                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase mb-1">{t('patient.history')}</h4>
+                                                <p className="text-sm text-slate-700">{patient.history || '-'}</p>
+                                            </div>
+                                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase mb-1">{t('patient.symptoms')}</h4>
+                                                <p className="text-sm text-slate-700">{patient.symptoms || '-'}</p>
+                                            </div>
+                                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                                <h4 className="text-xs font-bold text-slate-500 uppercase mb-1">{t('patient.habits')}</h4>
+                                                <p className="text-sm text-slate-700">{patient.habits || '-'}</p>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        ) : (
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                                {(() => {
+                                    const patient = patients.find(p => p.id === formData.patientId);
+                                    if (!patient) return <p className="text-slate-500 italic">Patient not found.</p>;
+                                    if (!patient.analysisHistory || patient.analysisHistory.length === 0) {
+                                        return (
+                                            <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg border-dashed border-2 border-slate-200">
+                                                <p>No radiographs found.</p>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <div className="space-y-3">
+                                            {patient.analysisHistory.map((analysis, idx) => (
+                                                <div key={idx} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                                            {new Date(analysis.date).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm font-medium text-slate-800 mb-1">{analysis.diagnosis}</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {analysis.findings?.map((f, i) => (
+                                                            <span key={i} className="text-[10px] bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded border border-teal-100">
+                                                                {f}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
+
+                        <div className="flex justify-between pt-4 gap-3 border-t border-slate-100 mt-4">
                             {editingAppointment && (
                                 <button
                                     type="button"
