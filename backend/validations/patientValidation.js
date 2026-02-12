@@ -2,7 +2,7 @@ const Joi = require('joi');
 
 const createPatientSchema = Joi.object({
     name: Joi.string().required().trim().min(2).max(100),
-    email: Joi.string().required().email().lowercase().trim(),
+    email: Joi.string().email().allow('', null).lowercase().trim(),
     phone: Joi.string().required().trim(),
     age: Joi.number().required().min(0).max(150),
     gender: Joi.string().valid('male', 'female', 'other').required(),

@@ -102,6 +102,11 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
             delete apiData.password;
         }
 
+        // Remove email if empty to avoid validation error
+        if (!apiData.email) {
+            delete apiData.email;
+        }
+
         // Remove frontend-only fields
         delete apiData.history;
 
