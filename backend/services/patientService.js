@@ -10,11 +10,12 @@ class PatientService {
     }
 
     async createPatient(data, user) {
-        return await patientRepository.create({
+        const patient = await patientRepository.create({
             ...data,
             userId: user._id,
             clinicName: user.clinicName
         });
+        return await patient.populate('userId', 'name title');
     }
 
     async updatePatient(id, clinicName, data) {
