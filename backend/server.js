@@ -19,6 +19,9 @@ connectDB();
 const setupReminders = require('./cron/reminderCron');
 setupReminders();
 
+// Initialize Event Subscribers
+require('./subscribers/notificationSubscriber');
+
 const app = express();
 
 // Body parser

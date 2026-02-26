@@ -1,20 +1,20 @@
-const LabJob = require('../models/LabJob');
+const labJobRepository = require('../repositories/LabJobRepository');
 
 class LabJobService {
     async getAllJobs(sort = { createdAt: -1 }) {
-        return await LabJob.find().sort(sort);
+        return await labJobRepository.findAll({}, '', sort);
     }
 
     async getJobById(id) {
-        return await LabJob.findById(id);
+        return await labJobRepository.findById(id);
     }
 
     async createJob(data) {
-        return await LabJob.create(data);
+        return await labJobRepository.create(data);
     }
 
     async updateJob(id, data) {
-        let job = await LabJob.findById(id);
+        let job = await labJobRepository.findById(id);
         if (!job) return null;
 
         // Auto-set receivedDate if status changes to Received
@@ -22,17 +22,14 @@ class LabJobService {
             data.receivedDate = Date.now();
         }
 
-        return await LabJob.findByIdAndUpdate(id, data, {
-            new: true,
-            runValidators: true
-        });
+        return await labJobRepository.update({ _id: id }, data);
     }
 
     async deleteJob(id) {
-        const job = await LabJob.findById(id);
+        const job = await labJobRepository.findById(id);
         if (!job) return null;
         
-        await job.deleteOne();
+        await labJobRepository.delete({ _id: id });
         return true;
     }
 }

@@ -1,38 +1,35 @@
-const InventoryItem = require('../models/InventoryItem');
+const inventoryRepository = require('../repositories/InventoryRepository');
 
 class InventoryService {
     async getAllItems(sort = { name: 1 }) {
-        return await InventoryItem.find().sort(sort);
+        return await inventoryRepository.findAll({}, '', sort);
     }
 
     async getItemById(id) {
-        return await InventoryItem.findById(id);
+        return await inventoryRepository.findById(id);
     }
 
     async createItem(data) {
-        return await InventoryItem.create(data);
+        return await inventoryRepository.create(data);
     }
 
     async updateItem(id, data) {
-        const item = await InventoryItem.findById(id);
+        const item = await inventoryRepository.findById(id);
         if (!item) return null;
 
-        return await InventoryItem.findByIdAndUpdate(id, data, {
-            new: true,
-            runValidators: true
-        });
+        return await inventoryRepository.update({ _id: id }, data);
     }
 
     async deleteItem(id) {
-        const item = await InventoryItem.findById(id);
+        const item = await inventoryRepository.findById(id);
         if (!item) return null;
 
-        await item.deleteOne();
+        await inventoryRepository.delete({ _id: id });
         return true;
     }
 
     async addTransaction(id, transactionData) {
-        const item = await InventoryItem.findById(id);
+        const item = await inventoryRepository.findById(id);
         if (!item) {
             throw new Error('Item not found');
         }
@@ -53,16 +50,21 @@ class InventoryService {
             newQuantity = numAmount;
         }
 
-        item.quantity = newQuantity;
-        item.transactions.push({
+        const transaction = {
             type,
             amount: numAmount,
             note,
             performedBy,
             date: Date.now()
-        });
+        };
 
-        return await item.save();
+        return await inventoryRepository.update(
+            { _id: id },
+            {
+                quantity: newQuantity,
+                $push: { transactions: transaction }
+            }
+        );
     }
 }
 

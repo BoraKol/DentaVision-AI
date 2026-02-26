@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     UserPlus,
@@ -45,6 +45,7 @@ const PatientList = React.lazy(() => import('./components/PatientList'));
 const Calendar = React.lazy(() => import('./components/Calendar'));
 const PatientDetails = React.lazy(() => import('./components/PatientDetails'));
 const FinancialDashboard = React.lazy(() => import('./components/FinancialDashboard'));
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const PatientLogin = React.lazy(() => import('./pages/portal/PatientLogin'));
 const PatientDashboard = React.lazy(() => import('./pages/portal/PatientDashboard'));
 const Inventory = React.lazy(() => import('./components/Inventory'));
@@ -322,16 +323,14 @@ const AppContent: React.FC = () => {
     );
 };
 
-// App wrapper with auth check
+// App wrapper with auth check (Only handles secured routes now)
 const AuthenticatedApp: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
-    const [showApp, setShowApp] = React.useState(false);
+    const navigate = import('react-router-dom').then(m => m.useNavigate);
 
-    // Reset showApp when user logs out
+    // Reset initialization
     React.useEffect(() => {
-        if (!isAuthenticated) {
-            setShowApp(false);
-        } else {
+        if (isAuthenticated) {
             // Initialize Push Notifications when authenticated
             notificationService.init();
         }
@@ -345,8 +344,9 @@ const AuthenticatedApp: React.FC = () => {
         );
     }
 
-    if (!isAuthenticated && !showApp) {
-        return <LoginPage onLoginSuccess={() => setShowApp(true)} />;
+    if (!isAuthenticated) {
+        // Redirection should be handled by the router or a Navigate component.
+        return <Navigate to="/login" replace />;
     }
 
     return (
@@ -379,11 +379,27 @@ const App: React.FC = () => (
                         </div>
                     }>
                         <Routes>
+                            {/* Public Routes */}
+                            <Route path="/" element={<LandingPage />} />
+
+                            {/* Inside Routes, we need a separate way to handle the login success redirect if it doesn't use standard hooks.
+                                LoginPage usually redirects inside its own component on success (e.g., navigate('/dashboard'))
+                            */}
+                            <Route path="/login" element={
+                                <LoginPage onLoginSuccess={() => {
+                                    window.location.href = '/dashboard';
+                                }} />
+                            } />
+
                             {/* Patient Portal Routes */}
                             <Route path="/portal/login" element={<PatientLogin />} />
-                            <Route path="/portal/dashboard" element={<PatientDashboard />} />
+                            <Route path="/portal/dashboard" element={
+                                <TreatmentProvider>
+                                    <PatientDashboard />
+                                </TreatmentProvider>
+                            } />
 
-                            {/* Main Application with Sidebar */}
+                            {/* Main Application with Sidebar (Secured) */}
                             <Route path="/*" element={<AuthenticatedApp />} />
                         </Routes>
                     </React.Suspense>

@@ -6,7 +6,23 @@ const AppError = require('../utils/AppError');
 // @route   GET /api/treatments/:patientId
 // @access  Private
 const getTreatments = catchAsync(async (req, res, next) => {
-    const treatments = await treatmentService.getTreatmentsByPatient(req.params.patientId, req.user.clinicName);
+    let clinicName;
+
+    // Check if request is from a patient
+    if (req.patient) {
+        // Security check: Patient can only access their own treatments
+        if (req.patient._id.toString() !== req.params.patientId) {
+            return next(new AppError('Not authorized to view these treatments', 403));
+        }
+        clinicName = req.patient.clinicName;
+    } else if (req.user) {
+        // Request from doctor/admin
+        clinicName = req.user.clinicName;
+    } else {
+        return next(new AppError('Not authorized', 401));
+    }
+
+    const treatments = await treatmentService.getTreatmentsByPatient(req.params.patientId, clinicName);
     res.json(treatments);
 });
 

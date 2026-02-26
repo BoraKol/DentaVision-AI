@@ -6,7 +6,11 @@ const AppError = require('../utils/AppError');
 // @route   GET /api/appointments
 // @access  Private
 const getAppointments = catchAsync(async (req, res, next) => {
-    const appointments = await appointmentService.getAllAppointments(req.user.clinicName);
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 0;
+    const skip = (page - 1) * limit;
+
+    const appointments = await appointmentService.getAllAppointments(req.user.clinicName, skip, limit);
     res.json(appointments);
 });
 
@@ -29,11 +33,17 @@ const getAppointment = catchAsync(async (req, res, next) => {
     res.json(appointment);
 });
 
+const eventBus = require('../events/eventBus');
+
 // @desc    Create an appointment
 // @route   POST /api/appointments
 // @access  Private
 const createAppointment = catchAsync(async (req, res, next) => {
     const appointment = await appointmentService.createAppointment(req.body, req.user);
+    
+    // Trigger Event Bus
+    eventBus.emit('APPOINTMENT_CREATED', { appointment });
+
     res.status(201).json(appointment);
 });
 
@@ -45,6 +55,12 @@ const updateAppointment = catchAsync(async (req, res, next) => {
     if (!appointment) {
         return next(new AppError('Appointment not found', 404));
     }
+
+    // Trigger Cancellation Event if status is cancelled
+    if (req.body.status === 'cancelled') {
+         eventBus.emit('APPOINTMENT_CANCELLED', { appointment });
+    }
+
     res.json(appointment);
 });
 

@@ -7,7 +7,11 @@ const CommunicationLog = require('../models/CommunicationLog');
 // @route   GET /api/patients
 // @access  Private
 const getPatients = catchAsync(async (req, res, next) => {
-    const patients = await patientService.getAllPatients(req.user.clinicName);
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 0; // default 0 ensures all records are returned unless requested
+    const skip = (page - 1) * limit;
+
+    const patients = await patientService.getAllPatients(req.user.clinicName, skip, limit);
     res.json(patients);
 });
 

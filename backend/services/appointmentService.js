@@ -1,53 +1,61 @@
-const Appointment = require('../models/Appointment');
+const appointmentRepository = require('../repositories/AppointmentRepository');
 
 class AppointmentService {
-    async getAllAppointments(clinicName) {
-        return await Appointment.find({ clinicName })
-            .populate('patientId', 'name')
-            .populate('userId', 'name title')
-            .sort({ date: 1, time: 1 });
+    async getAllAppointments(clinicName, skip = 0, limit = 0) {
+        return await appointmentRepository.findAll(
+            { clinicName },
+            [{ path: 'patientId', select: 'name' }, { path: 'userId', select: 'name title' }],
+            { date: 1, time: 1 },
+            skip,
+            limit
+        );
     }
 
     async getAppointmentsByDate(clinicName, date) {
-        return await Appointment.find({
-            clinicName,
-            date
-        })
-        .populate('patientId', 'name')
-        .populate('userId', 'name title')
-        .sort({ time: 1 });
+        return await appointmentRepository.findAll(
+            { clinicName, date },
+            [{ path: 'patientId', select: 'name' }, { path: 'userId', select: 'name title' }],
+            { time: 1 }
+        );
     }
 
     async getAppointmentById(id, clinicName) {
-        return await Appointment.findOne({
-            _id: id,
-            clinicName
-        }).populate('patientId', 'name').populate('userId', 'name title');
+        return await appointmentRepository.findOne(
+            { _id: id, clinicName },
+            [{ path: 'patientId', select: 'name' }, { path: 'userId', select: 'name title' }]
+        );
     }
 
     async createAppointment(data, user) {
-        const appointment = await Appointment.create({
+        let appointment = await appointmentRepository.create({
             ...data,
             userId: user._id,
             clinicName: user.clinicName
         });
 
         return await appointment.populate([
-            { path: 'patientId', select: 'name' },
+            { path: 'patientId', select: 'name phone' },
             { path: 'userId', select: 'name title' }
         ]);
     }
 
     async updateAppointment(id, clinicName, data) {
-        return await Appointment.findOneAndUpdate(
+        const appointment = await appointmentRepository.update(
             { _id: id, clinicName },
-            data,
-            { new: true, runValidators: true }
-        ).populate('patientId', 'name').populate('userId', 'name title');
+            data
+        );
+        
+        if (appointment) {
+            return await appointment.populate([
+                { path: 'patientId', select: 'name phone' },
+                { path: 'userId', select: 'name title' }
+            ]);
+        }
+        return null;
     }
 
     async deleteAppointment(id) {
-        return await Appointment.findOneAndDelete({ _id: id });
+        return await appointmentRepository.delete({ _id: id });
     }
 }
 

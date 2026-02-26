@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
 const CommunicationLog = require('../models/CommunicationLog');
+const smsService = require('./smsService'); // Import the new SmsService
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 class NotificationService {
@@ -19,8 +20,6 @@ class NotificationService {
 
     async logCommunication(patientId, type, recipient, message, status, title = '') {
         try {
-            if (!patientId) return; // Can't log if no patient ID
-            
             await CommunicationLog.create({
                 patientId,
                 type,
@@ -28,7 +27,7 @@ class NotificationService {
                 title,
                 message,
                 status,
-                provider: 'MockService'
+                provider: process.env.SMS_PROVIDER || 'System'
             });
         } catch (error) {
             console.error('Failed to log communication:', error);
@@ -36,16 +35,20 @@ class NotificationService {
     }
 
     async sendSMS(patientId, phoneNumber, message) {
-        console.log(`📱 [Mock SMS] Sending to ${phoneNumber}: ${message}`);
-        
-        // Simulate success
-        const success = true;
-
-        if (patientId) {
-            await this.logCommunication(patientId, 'SMS', phoneNumber, message, success ? 'SENT' : 'FAILED');
+        try {
+            const result = await smsService.send(phoneNumber, message);
+            
+            if (patientId) {
+                await this.logCommunication(patientId, 'SMS', phoneNumber, message, result.success ? 'SENT' : 'FAILED');
+            }
+            return result;
+        } catch (error) {
+            console.error('SMS Send Error in NotificationService:', error);
+            if (patientId) {
+                await this.logCommunication(patientId, 'SMS', phoneNumber, message, 'FAILED');
+            }
+            return { success: false, error: error.message };
         }
-
-        return { success, messageId: `mock-sms-${Date.now()}` };
     }
 
     async sendEmail(patientId, to, subject, htmlContent) {

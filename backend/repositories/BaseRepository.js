@@ -3,8 +3,11 @@ class BaseRepository {
         this.model = model;
     }
 
-    async findAll(filter = {}, populate = '', sort = { createdAt: -1 }) {
-        return await this.model.find(filter).populate(populate).sort(sort);
+    async findAll(filter = {}, populate = '', sort = { createdAt: -1 }, skip = 0, limit = 0) {
+        let query = this.model.find(filter).populate(populate).sort(sort);
+        if (skip > 0) query = query.skip(skip);
+        if (limit > 0) query = query.limit(limit);
+        return await query;
     }
 
     async findOne(filter = {}, populate = '') {

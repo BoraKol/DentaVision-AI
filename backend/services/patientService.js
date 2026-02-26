@@ -1,8 +1,8 @@
 const patientRepository = require('../repositories/PatientRepository');
 
 class PatientService {
-    async getAllPatients(clinicName) {
-        return await patientRepository.findWithUserDetails(clinicName);
+    async getAllPatients(clinicName, skip = 0, limit = 0) {
+        return await patientRepository.findWithUserDetails(clinicName, skip, limit);
     }
 
     async getPatientById(id, clinicName) {

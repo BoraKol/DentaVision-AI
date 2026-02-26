@@ -27,7 +27,7 @@ const setupReminders = () => {
                     $lt: dayAfterTomorrow
                 },
                 status: 'Scheduled'
-            });
+            }).populate('userId', 'name');
 
             console.log(`📅 Found ${appointments.length} appointments for tomorrow (${tomorrow.toDateString()}).`);
 

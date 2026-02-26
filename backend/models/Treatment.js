@@ -46,4 +46,7 @@ const treatmentSchema = new mongoose.Schema({
     timestamps: true
 });
 
+treatmentSchema.index({ clinicName: 1, patientId: 1 });
+treatmentSchema.index({ clinicName: 1, date: -1 });
+
 module.exports = mongoose.model('Treatment', treatmentSchema);

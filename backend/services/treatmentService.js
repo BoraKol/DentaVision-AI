@@ -1,32 +1,36 @@
-const Treatment = require('../models/Treatment');
+const treatmentRepository = require('../repositories/TreatmentRepository');
 const Transaction = require('../models/Transaction');
 
 class TreatmentService {
     async getTreatmentsByPatient(patientId, clinicName) {
-        return await Treatment.find({
-            patientId,
-            clinicName
-        }).sort({ date: -1 });
+        return await treatmentRepository.findAll(
+            { patientId, clinicName },
+            '',
+            { date: -1 }
+        );
     }
 
     async createTreatment(data, user) {
-        return await Treatment.create({
+        return await treatmentRepository.create({
             ...data,
             clinicName: user.clinicName
         });
     }
 
     async updateTreatmentStatus(id, clinicName, status) {
-        const oldTreatment = await Treatment.findOne({ _id: id, clinicName });
+        const oldTreatment = await treatmentRepository.findOne({ _id: id, clinicName });
         if (!oldTreatment) {
             return null;
         }
 
-        const treatment = await Treatment.findOneAndUpdate(
+        const treatment = await treatmentRepository.update(
             { _id: id, clinicName },
-            { status },
-            { new: true }
-        ).populate('patientId', 'name');
+            { status }
+        );
+
+        if (treatment) {
+            await treatment.populate('patientId', 'name');
+        }
 
         // Financial Automation Logic
         if (status === 'completed' && oldTreatment.status !== 'completed') {
@@ -52,7 +56,7 @@ class TreatmentService {
     }
 
     async deleteTreatment(id, clinicName) {
-        const treatment = await Treatment.findOneAndDelete({
+        const treatment = await treatmentRepository.delete({
             _id: id,
             clinicName
         });

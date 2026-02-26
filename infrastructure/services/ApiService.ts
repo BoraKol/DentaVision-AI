@@ -14,8 +14,17 @@ const api = axios.create({
 // Request interceptor - Add token to headers
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
-        // Only add token if not already present (allows overriding for patient portal)
+        // Determine which token to use based on the request URL
+        const isPortalRequest = config.url?.includes('/portal');
+
+        let token;
+        if (isPortalRequest) {
+            token = localStorage.getItem('patientToken');
+        } else {
+            token = localStorage.getItem('token');
+        }
+
+        // Only add token if not already present
         if (token && !config.headers.Authorization) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -168,6 +177,12 @@ export const photosAPI = {
 export const enabizAPI = {
     sendTreatment: (data: { patientId: string; treatmentData: any }) => api.post('/enabiz/treatment', data),
     getLogs: (patientId: string) => api.get(`/enabiz/logs/${patientId}`)
+};
+
+// Patient Portal API
+export const portalAPI = {
+    getAvailableSlots: (date: string) => api.get(`/portal/available-slots?date=${date}`),
+    bookAppointment: (data: { date: string; time: string; procedure: string; notes?: string }) => api.post('/portal/book-appointment', data)
 };
 
 export default api;

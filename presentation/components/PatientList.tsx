@@ -268,6 +268,125 @@ interface PatientListProps {
     onSelectPatient?: (patient: any) => void;
 }
 
+const PatientListItem = React.memo<{
+    patient: any;
+    isSelected: boolean;
+    isExpanded: boolean;
+    onSelectToggle: () => void;
+    onExpandToggle: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
+    getGenderLabel: (g: string) => string;
+    labels: any;
+    language: string;
+    t: any;
+}>((props) => {
+    const { patient, isSelected, isExpanded, onSelectToggle, onExpandToggle, onEdit, onDelete, getGenderLabel, labels, language, t } = props;
+    return (
+        <div
+            className={`bg-white rounded-xl border-2 transition-all ${isSelected
+                ? 'border-teal-500 shadow-md'
+                : 'border-slate-200 hover:border-slate-300'
+                }`}
+        >
+            <div className="p-4">
+                <div className="flex items-start justify-between">
+                    <div
+                        className="flex items-center space-x-4 cursor-pointer flex-1 min-w-0"
+                        onClick={onSelectToggle}
+                    >
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold text-lg">
+                            {patient.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-slate-800">{patient.name}</h3>
+                            <div className="flex items-center space-x-3 text-sm text-slate-500">
+                                <span>{patient.age} {labels.yearsOld}</span>
+                                <span>•</span>
+                                <span>{getGenderLabel(patient.gender)}</span>
+                                {patient.userId && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-slate-400 text-xs bg-slate-100 px-2 py-0.5 rounded-full">
+                                            {language === 'tr' ? 'Ekleyen:' : 'Added by:'} {patient.userId.title} {patient.userId.name}
+                                        </span>
+                                    </>
+                                )}
+                                {patient.analysisHistory && patient.analysisHistory.length > 0 && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="text-teal-600">{patient.analysisHistory.length} {labels.analysisCount}</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={onExpandToggle}
+                            className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg"
+                            title={t('common.details') || labels.details}
+                        >
+                            <FileText className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={onEdit}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title={labels.edit}
+                        >
+                            <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={onDelete}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                            title={labels.delete}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+                        {patient.history && (
+                            <div>
+                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.history}</span>
+                                <p className="text-sm text-slate-700">{patient.history}</p>
+                            </div>
+                        )}
+                        {patient.symptoms && (
+                            <div>
+                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.symptoms}</span>
+                                <p className="text-sm text-slate-700">{patient.symptoms}</p>
+                            </div>
+                        )}
+                        {patient.analysisHistory && patient.analysisHistory.length > 0 && (
+                            <div>
+                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.analysisHistory}</span>
+                                <div className="mt-2 space-y-2">
+                                    {patient.analysisHistory.slice(-3).map((analysis: any) => (
+                                        <div key={analysis.id} className="bg-slate-50 p-3 rounded-lg text-sm">
+                                            <div className="flex items-center text-slate-500 mb-1">
+                                                <Calendar className="w-3 h-3 mr-1" />
+                                                {new Date(analysis.date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
+                                            </div>
+                                            <p className="text-slate-700">{analysis.diagnosis}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="text-xs text-slate-400">
+                            {labels.registered}: {new Date(patient.createdAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')} •
+                            {labels.lastUpdate}: {new Date(patient.updatedAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+});
+
 const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
     const { patients, deletePatient, selectPatient, selectedPatient } = usePatient();
     const { addToast } = useToast();
@@ -385,117 +504,33 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
                         <p className="text-sm">{labels.addPatientHint}</p>
                     </div>
                 ) : (
-                    filteredPatients.map((patient) => (
-                        <div
-                            key={patient.id}
-                            className={`bg-white rounded-xl border-2 transition-all ${selectedPatient?.id === patient.id
-                                ? 'border-teal-500 shadow-md'
-                                : 'border-slate-200 hover:border-slate-300'
-                                }`}
-                        >
-                            <div className="p-4">
-                                <div className="flex items-start justify-between">
-                                    <div
-                                        className="flex items-center space-x-4 cursor-pointer flex-1 min-w-0"
-                                        onClick={() => selectPatient(selectedPatient?.id === patient.id ? null : patient.id)}
-                                    >
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold text-lg">
-                                            {patient.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-slate-800">{patient.name}</h3>
-                                            <div className="flex items-center space-x-3 text-sm text-slate-500">
-                                                <span>{patient.age} {labels.yearsOld}</span>
-                                                <span>•</span>
-                                                <span>{getGenderLabel(patient.gender)}</span>
-                                                {patient.userId && (
-                                                    <>
-                                                        <span>•</span>
-                                                        <span className="text-slate-400 text-xs bg-slate-100 px-2 py-0.5 rounded-full">
-                                                            {language === 'tr' ? 'Ekleyen:' : 'Added by:'} {patient.userId.title} {patient.userId.name}
-                                                        </span>
-                                                    </>
-                                                )}
-                                                {patient.analysisHistory && patient.analysisHistory.length > 0 && (
-                                                    <>
-                                                        <span>•</span>
-                                                        <span className="text-teal-600">{patient.analysisHistory.length} {labels.analysisCount}</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <button
-                                            onClick={() => {
-                                                if (onSelectPatient) {
-                                                    onSelectPatient(patient);
-                                                } else {
-                                                    setExpandedPatient(expandedPatient === patient.id ? null : patient.id);
-                                                }
-                                            }}
-                                            className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg"
-                                            title={t('common.details') || labels.details}
-                                        >
-                                            <FileText className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleEdit(patient)}
-                                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-                                            title={labels.edit}
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteClick(patient.id, patient.name)}
-                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                            title={labels.delete}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
+                    filteredPatients.map((patient) => {
+                        const isSelected = selectedPatient?.id === patient.id;
+                        const isExpanded = expandedPatient === patient.id;
 
-                                {/* Expanded Details */}
-                                {expandedPatient === patient.id && (
-                                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
-                                        {patient.history && (
-                                            <div>
-                                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.history}</span>
-                                                <p className="text-sm text-slate-700">{patient.history}</p>
-                                            </div>
-                                        )}
-                                        {patient.symptoms && (
-                                            <div>
-                                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.symptoms}</span>
-                                                <p className="text-sm text-slate-700">{patient.symptoms}</p>
-                                            </div>
-                                        )}
-                                        {patient.analysisHistory && patient.analysisHistory.length > 0 && (
-                                            <div>
-                                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.analysisHistory}</span>
-                                                <div className="mt-2 space-y-2">
-                                                    {patient.analysisHistory.slice(-3).map(analysis => (
-                                                        <div key={analysis.id} className="bg-slate-50 p-3 rounded-lg text-sm">
-                                                            <div className="flex items-center text-slate-500 mb-1">
-                                                                <Calendar className="w-3 h-3 mr-1" />
-                                                                {new Date(analysis.date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
-                                                            </div>
-                                                            <p className="text-slate-700">{analysis.diagnosis}</p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className="text-xs text-slate-400">
-                                            {labels.registered}: {new Date(patient.createdAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')} •
-                                            {labels.lastUpdate}: {new Date(patient.updatedAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))
+                        return (
+                            <PatientListItem
+                                key={patient.id}
+                                patient={patient}
+                                isSelected={isSelected}
+                                isExpanded={isExpanded}
+                                onSelectToggle={() => selectPatient(isSelected ? null : patient.id)}
+                                onExpandToggle={() => {
+                                    if (onSelectPatient) {
+                                        onSelectPatient(patient);
+                                    } else {
+                                        setExpandedPatient(isExpanded ? null : patient.id);
+                                    }
+                                }}
+                                onEdit={() => handleEdit(patient)}
+                                onDelete={() => handleDeleteClick(patient.id, patient.name)}
+                                getGenderLabel={getGenderLabel}
+                                labels={labels}
+                                language={language}
+                                t={t}
+                            />
+                        );
+                    })
                 )}
             </div>
 
