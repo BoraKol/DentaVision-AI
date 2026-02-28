@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const financialsController = require('../controllers/financialsController');
+const validate = require('../utils/validate');
+const { createTransactionSchema } = require('../validators/financialsValidator');
 
 console.log('✅ Financials router initialized');
 
@@ -10,7 +12,7 @@ console.log('✅ Financials router initialized');
 // @access  Private
 router.route('/')
     .get(protect, financialsController.getTransactions)
-    .post(protect, financialsController.createTransaction);
+    .post(protect, validate(createTransactionSchema), financialsController.createTransaction);
 
 // @desc    Get financial stats
 // @route   GET /api/financials/stats

@@ -1,11 +1,12 @@
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
     let error = { ...err };
     error.message = err.message;
 
-    // Log to console for dev
-    console.error(err);
+    // Log to winston
+    logger.error(`${err.name || 'Error'}: ${err.message} \nStack: ${err.stack}`);
 
     // Mongoose bad ObjectId
     if (err.name === 'CastError') {

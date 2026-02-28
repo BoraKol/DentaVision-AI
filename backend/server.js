@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
 const path = require('path'); // Add path module
+const logger = require('./utils/logger'); // Import Winston logger
 
 // Initialize database
 connectDB();
@@ -19,6 +20,10 @@ setupReminders();
 require('./subscribers/notificationSubscriber');
 
 const app = express();
+
+// HTTP Request Logger Middleware
+const morgan = require('morgan');
+app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 
 // Body parser
 app.use(express.json());
@@ -95,4 +100,5 @@ const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
     console.log(`🦷 DentaVision Backend running on port ${PORT}`);
+    logger.info(`🦷 DentaVision Backend running on port ${PORT}`);
 });

@@ -9,7 +9,7 @@ const {
     addTransaction
 } = require('../controllers/inventoryController');
 
-const validate = require('../middleware/validate');
+const validate = require('../utils/validate');
 const { createInventoryItemSchema, updateInventoryItemSchema } = require('../validators/inventoryValidator');
 const { protect, authorize } = require('../middleware/auth');
 

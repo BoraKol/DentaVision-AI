@@ -98,6 +98,5 @@ patientSchema.index({ userId: 1, name: 1 });
 patientSchema.index({ name: 'text' }); // Text index for global search
 patientSchema.index({ phone: 1 });
 patientSchema.index({ email: 1 });
-patientSchema.index({ portalAccessKey: 1 });
 
 module.exports = mongoose.model('Patient', patientSchema);
