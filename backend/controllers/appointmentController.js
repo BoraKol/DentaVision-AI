@@ -1,6 +1,8 @@
 const appointmentService = require('../services/appointmentService');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const { sendResponse } = require('../utils/apiResponse');
+const eventBus = require('../events/eventBus');
 
 // @desc    Get all appointments
 // @route   GET /api/appointments
@@ -11,7 +13,7 @@ const getAppointments = catchAsync(async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const appointments = await appointmentService.getAllAppointments(req.user.clinicName, skip, limit);
-    res.json(appointments);
+    sendResponse(res, 200, appointments, 'Appointments retrieved successfully');
 });
 
 // @desc    Get appointments by date
@@ -19,7 +21,7 @@ const getAppointments = catchAsync(async (req, res, next) => {
 // @access  Private
 const getAppointmentsByDate = catchAsync(async (req, res, next) => {
     const appointments = await appointmentService.getAppointmentsByDate(req.user.clinicName, req.params.date);
-    res.json(appointments);
+    sendResponse(res, 200, appointments, 'Date-specific appointments retrieved');
 });
 
 // @desc    Get single appointment
@@ -30,21 +32,16 @@ const getAppointment = catchAsync(async (req, res, next) => {
     if (!appointment) {
         return next(new AppError('Appointment not found', 404));
     }
-    res.json(appointment);
+    sendResponse(res, 200, appointment, 'Appointment details retrieved');
 });
 
-const eventBus = require('../events/eventBus');
-
-// @desc    Create an appointment
-// @route   POST /api/appointments
-// @access  Private
 const createAppointment = catchAsync(async (req, res, next) => {
     const appointment = await appointmentService.createAppointment(req.body, req.user);
     
     // Trigger Event Bus
     eventBus.emit('APPOINTMENT_CREATED', { appointment });
 
-    res.status(201).json(appointment);
+    sendResponse(res, 201, appointment, 'Appointment created successfully');
 });
 
 // @desc    Update an appointment
@@ -61,7 +58,7 @@ const updateAppointment = catchAsync(async (req, res, next) => {
          eventBus.emit('APPOINTMENT_CANCELLED', { appointment });
     }
 
-    res.json(appointment);
+    sendResponse(res, 200, appointment, 'Appointment updated successfully');
 });
 
 // @desc    Delete an appointment
@@ -72,7 +69,7 @@ const deleteAppointment = catchAsync(async (req, res, next) => {
     if (!appointment) {
         return next(new AppError('Appointment not found', 404));
     }
-    res.json({ message: 'Appointment deleted successfully' });
+    sendResponse(res, 200, null, 'Appointment deleted successfully');
 });
 
 module.exports = {

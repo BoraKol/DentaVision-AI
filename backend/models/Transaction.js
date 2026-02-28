@@ -64,4 +64,10 @@ const TransactionSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Indexes for faster reporting and tracking
+TransactionSchema.index({ clinicName: 1, date: -1 });
+TransactionSchema.index({ patientId: 1 });
+TransactionSchema.index({ doctorId: 1 });
+TransactionSchema.index({ type: 1, category: 1 });
+
 module.exports = mongoose.model('Transaction', TransactionSchema);

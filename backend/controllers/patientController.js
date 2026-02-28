@@ -1,6 +1,8 @@
 const patientService = require('../services/patientService');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const { sendResponse } = require('../utils/apiResponse');
+const eventBus = require('../events/eventBus');
 const CommunicationLog = require('../models/CommunicationLog');
 
 // @desc    Get all patients
@@ -12,7 +14,7 @@ const getPatients = catchAsync(async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const patients = await patientService.getAllPatients(req.user.clinicName, skip, limit);
-    res.json(patients);
+    sendResponse(res, 200, patients, 'Patients retrieved successfully');
 });
 
 // @desc    Get single patient
@@ -23,7 +25,7 @@ const getPatient = catchAsync(async (req, res, next) => {
     if (!patient) {
         return next(new AppError('Patient not found', 404));
     }
-    res.json(patient);
+    sendResponse(res, 200, patient, 'Patient details retrieved');
 });
 
 // @desc    Create a patient
@@ -31,7 +33,11 @@ const getPatient = catchAsync(async (req, res, next) => {
 // @access  Private
 const createPatient = catchAsync(async (req, res, next) => {
     const patient = await patientService.createPatient(req.body, req.user);
-    res.status(201).json(patient);
+    
+    // Trigger Event Bus
+    eventBus.emit('PATIENT_CREATED', { patient, user: req.user });
+
+    sendResponse(res, 201, patient, 'Patient created successfully');
 });
 
 // @desc    Update a patient
@@ -42,7 +48,7 @@ const updatePatient = catchAsync(async (req, res, next) => {
     if (!patient) {
         return next(new AppError('Patient not found', 404));
     }
-    res.json(patient);
+    sendResponse(res, 200, patient, 'Patient updated successfully');
 });
 
 // @desc    Delete a patient
@@ -53,7 +59,7 @@ const deletePatient = catchAsync(async (req, res, next) => {
     if (!patient) {
         return next(new AppError('Patient not found', 404));
     }
-    res.json({ message: 'Patient deleted successfully' });
+    sendResponse(res, 200, null, 'Patient deleted successfully');
 });
 
 // @desc    Get communication logs for a patient
@@ -61,11 +67,7 @@ const deletePatient = catchAsync(async (req, res, next) => {
 // @access  Private
 const getCommunicationLogs = catchAsync(async (req, res, next) => {
     const logs = await CommunicationLog.find({ patientId: req.params.id }).sort({ sentAt: -1 });
-    res.json({
-        success: true,
-        count: logs.length,
-        data: logs
-    });
+    sendResponse(res, 200, logs, 'Communication logs retrieved');
 });
 
 module.exports = {

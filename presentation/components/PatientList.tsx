@@ -11,7 +11,7 @@ interface PatientModalProps {
     editingPatient?: any;
 }
 
-const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPatient }) => {
+const PatientModal: React.FC<PatientModalProps> = React.memo(({ isOpen, onClose, editingPatient }) => {
     const { addPatient, updatePatient } = usePatient();
     const { addToast } = useToast();
     const { t, language } = useLanguage();
@@ -262,7 +262,9 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, editingPat
             </div>
         </div>
     );
-};
+});
+
+PatientModal.displayName = 'PatientModal';
 
 interface PatientListProps {
     onSelectPatient?: (patient: any) => void;
@@ -401,8 +403,8 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [patientToDelete, setPatientToDelete] = useState<{ id: string; name: string } | null>(null);
 
-    // i18n labels
-    const labels = {
+    // i18n labels - Memoized
+    const labels = useMemo(() => ({
         title: language === 'tr' ? 'Hasta Kayıtları' : 'Patient Records',
         subtitle: language === 'tr' ? 'Kayıtlı hastalarınızı yönetin.' : 'Manage your registered patients.',
         newPatient: language === 'tr' ? 'Yeni Hasta' : 'New Patient',
@@ -425,7 +427,7 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
         deleteConfirmTitle: language === 'tr' ? 'Hastayı Sil' : 'Delete Patient',
         deleteConfirmMessage: language === 'tr' ? 'Bu hastayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.' : 'Are you sure you want to delete this patient? This action cannot be undone.',
         patientDeleted: language === 'tr' ? 'Hasta kaydı silindi.' : 'Patient record deleted.'
-    };
+    }), [language]);
 
     const filteredPatients = useMemo(() => {
         if (!searchTerm.trim()) return patients;
@@ -436,36 +438,37 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
         );
     }, [patients, searchTerm]);
 
-    const handleDeleteClick = (id: string, name: string) => {
+    const handleDeleteClick = React.useCallback((id: string, name: string) => {
         setPatientToDelete({ id, name });
         setConfirmOpen(true);
-    };
+    }, []);
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = React.useCallback(() => {
         if (patientToDelete) {
             deletePatient(patientToDelete.id);
             addToast(`"${patientToDelete.name}" ${labels.patientDeleted}`, 'info');
             setPatientToDelete(null);
+            setConfirmOpen(false);
         }
-    };
+    }, [patientToDelete, deletePatient, addToast, labels.patientDeleted]);
 
-    const handleEdit = (patient: any) => {
+    const handleEdit = React.useCallback((patient: any) => {
         setEditingPatient(patient);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleAddNew = () => {
+    const handleAddNew = React.useCallback(() => {
         setEditingPatient(null);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const getGenderLabel = (gender: string) => {
+    const getGenderLabel = React.useCallback((gender: string) => {
         if (!gender) return labels.other;
         const g = gender.toLowerCase();
         if (g === 'male') return labels.male;
         if (g === 'female') return labels.female;
         return labels.other;
-    };
+    }, [labels]);
 
     return (
         <div className="h-full flex flex-col">

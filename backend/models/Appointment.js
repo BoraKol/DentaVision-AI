@@ -49,7 +49,8 @@ const appointmentSchema = new mongoose.Schema({
 });
 
 // Index for faster date-based queries
-appointmentSchema.index({ clinicName: 1, date: 1 });
+appointmentSchema.index({ clinicName: 1, date: 1, status: 1 });
 appointmentSchema.index({ userId: 1, date: 1 });
+appointmentSchema.index({ patientId: 1 });
 
 module.exports = mongoose.model('Appointment', appointmentSchema);
