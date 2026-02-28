@@ -38,9 +38,18 @@ const updateProfile = catchAsync(async (req, res, next) => {
     sendResponse(res, 200, user, 'Profile updated successfully');
 });
 
+// @desc    Get raw Gemini API Key (Secure)
+// @route   GET /api/auth/api-key
+// @access  Private
+const getApiKey = catchAsync(async (req, res, next) => {
+    const apiKey = await authService.getRawApiKey(req.user._id);
+    sendResponse(res, 200, { apiKey }, 'API Key retrieved safely');
+});
+
 module.exports = {
     register,
     login,
     getMe,
-    updateProfile
+    updateProfile,
+    getApiKey
 };

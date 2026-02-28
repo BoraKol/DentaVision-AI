@@ -83,6 +83,7 @@ class AuthService {
 
             const updatedUser = await user.save();
 
+            // Return masked version for UI
             return {
                 _id: updatedUser._id,
                 name: updatedUser.name,
@@ -93,11 +94,18 @@ class AuthService {
                 role: updatedUser.role,
                 avatar: updatedUser.avatar,
                 preferences: updatedUser.preferences,
-                geminiApiKey: updatedUser.geminiApiKey
+                geminiApiKey: updatedUser.geminiApiKey 
+                    ? `${updatedUser.geminiApiKey.substring(0, 8)}...****` 
+                    : ''
             };
         } else {
             throw new AppError('User not found', 404);
         }
+    }
+
+    async getRawApiKey(userId) {
+        const user = await userRepository.findByIdWithSelect(userId, '+geminiApiKey');
+        return user ? user.geminiApiKey : '';
     }
 }
 

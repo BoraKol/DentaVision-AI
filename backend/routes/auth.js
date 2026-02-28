@@ -5,7 +5,8 @@ const {
     register,
     login,
     getMe,
-    updateProfile
+    updateProfile,
+    getApiKey
 } = require('../controllers/authController');
 
 const { registerSchema, loginSchema, updateProfileSchema } = require('../validations/authValidation');
@@ -15,5 +16,6 @@ router.post('/register', validate(registerSchema), register);
 router.post('/login', validate(loginSchema), login);
 router.get('/me', protect, getMe);
 router.put('/me', protect, validate(updateProfileSchema), updateProfile);
+router.get('/api-key', protect, getApiKey);
 
 module.exports = router;

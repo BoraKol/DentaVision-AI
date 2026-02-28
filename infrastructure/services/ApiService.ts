@@ -84,7 +84,8 @@ export const authAPI = {
 
     getMe: () => api.get('/auth/me'),
 
-    updateProfile: (data: any) => api.put('/auth/me', data)
+    updateProfile: (data: any) => api.put('/auth/me', data),
+    getGeminiKey: () => api.get('/auth/api-key')
 };
 
 // Patients API

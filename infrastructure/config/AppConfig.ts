@@ -1,27 +1,28 @@
 export class AppConfig {
+    private static _inMemoryKey: string = '';
+
+    static setGeminiKey(key: string): void {
+        this._inMemoryKey = key;
+        if (key) {
+            console.log("[AppConfig] Secure RAM-only Gemini API Key initialized");
+        }
+    }
+
     static get GEMINI_API_KEY(): string {
-        // First check stored user profile (Secure database storage)
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                const user = JSON.parse(storedUser);
-                if (user.geminiApiKey) {
-                    console.log("[AppConfig] Using SECURE Gemini API Key from User Profile");
-                    return user.geminiApiKey;
-                }
-            } catch (e) {
-                console.error('Failed to parse user for API key');
-            }
+        // Priority 1: RAM-only storage (Most Secure)
+        if (this._inMemoryKey) {
+            return this._inMemoryKey;
         }
 
-        // Fallback to environment variables
-        const key = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
+        // Priority 2: Fallback to environment variables (Default/Mock)
+        const envKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
 
-        if (!key) {
-            return '';
+        if (envKey) {
+            console.log("[AppConfig] Using DEFAULT Gemini API Key from environment");
+            return envKey;
         }
-        console.log("[AppConfig] Using DEFAULT Gemini API Key from environment");
-        return key;
+
+        return '';
     }
 
     static get IS_DEV(): boolean {

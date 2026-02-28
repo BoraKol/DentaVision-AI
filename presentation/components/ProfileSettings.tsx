@@ -22,8 +22,9 @@ const ProfileSettingsContent: React.FC = () => {
     const handleSaveKey = async () => {
         try {
             await updateUser({ geminiApiKey: apiKey.trim() } as any);
-            // Clean up old insecure storage if it exists
-            localStorage.removeItem('denta_vision_gemini_key');
+            // After saving, the backend returns a masked key. 
+            // AuthContext.updateProfile will automatically trigger fetchGeminiApiKey() to RAM 
+            // because we passed geminiApiKey in updates.
             setKeySaved(true);
             setTimeout(() => setKeySaved(false), 3000);
         } catch (error) {
@@ -273,8 +274,8 @@ const ProfileSettingsContent: React.FC = () => {
                     </div>
                     <p className="text-xs text-slate-500 mt-2">
                         {language === 'tr'
-                            ? 'Anahtarınız kullanıcı profilinizde güvenli bir şekilde saklanır ve sadece sizin oturumunuzda kullanılır.'
-                            : 'Your key is securely stored in your user profile and only used within your session.'}
+                            ? 'Anahtarınız veritabanında güvenli bir şekilde saklanır ve sadece oturum sırasında bellekte (RAM) tutulur.'
+                            : 'Your key is securely stored in the database and only held in memory (RAM) during your session.'}
                     </p>
                 </div>
             </div>
