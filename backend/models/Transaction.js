@@ -46,6 +46,19 @@ const TransactionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: false
+    },
+    invoiceStatus: {
+        type: String,
+        enum: ['PENDING', 'GENERATED', 'FAILED'],
+        default: 'PENDING'
+    },
+    invoiceId: {
+        type: String,
+        required: false
+    },
+    invoiceDocumentUrl: {
+        type: String,
+        required: false
     }
 }, {
     timestamps: true

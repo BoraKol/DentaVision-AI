@@ -6,14 +6,10 @@ const errorHandler = require('./middleware/errorHandler');
 
 const path = require('path'); // Add path module
 
-// Route files
-const authRoutes = require('./routes/auth');
-const patientRoutes = require('./routes/patients');
-const appointmentRoutes = require('./routes/appointments');
-const photoRoutes = require('./routes/photos');
-
-// Connect to database
+// Initialize database
 connectDB();
+
+const loadRoutes = require('./utils/routeLoader');
 
 // Initialize Cron Jobs
 const setupReminders = require('./cron/reminderCron');
@@ -80,18 +76,8 @@ app.use('/api/auth/register', authLimiter);
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Mount routers
-app.use('/api/auth', authRoutes);
-app.use('/api/patients', patientRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/photos', photoRoutes);
-app.use('/api/financials', require('./routes/financials'));
-app.use('/api/treatments', require('./routes/treatments'));
-app.use('/api/prescriptions', require('./routes/prescriptions'));
-app.use('/api/inventory', require('./routes/inventory'));
-app.use('/api/lab-jobs', require('./routes/labJobs'));
-app.use('/api/portal', require('./routes/patientPortal'));
-app.use('/api/enabiz', require('./routes/enabiz'));
+// Mount all routers dynamically
+loadRoutes(app);
 
 // Health check
 app.get('/api/health', (req, res) => {

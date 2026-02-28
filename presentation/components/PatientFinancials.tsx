@@ -16,13 +16,14 @@ interface PatientFinancialsProps {
 const PatientFinancials: React.FC<PatientFinancialsProps> = ({ patientId }) => {
     const {
         transactions, loading, fetchPatientTransactions,
-        addTransaction, deleteTransaction, totals
+        addTransaction, deleteTransaction, generateInvoice, totals
     } = useFinancial();
     const { language } = useLanguage();
     const { addToast } = useToast();
     const { items: treatments } = useTreatment();
 
     const [isAdding, setIsAdding] = useState(false);
+    const [generatingId, setGeneratingId] = useState<string | null>(null);
     const [newTransaction, setNewTransaction] = useState({
         type: 'INCOME' as const,
         amount: 0,
@@ -36,6 +37,18 @@ const PatientFinancials: React.FC<PatientFinancialsProps> = ({ patientId }) => {
             fetchPatientTransactions(patientId);
         }
     }, [patientId, fetchPatientTransactions]);
+
+    const handleGenerateInvoice = async (id: string) => {
+        setGeneratingId(id);
+        try {
+            await generateInvoice(id);
+            addToast(language === 'tr' ? 'E-Fatura başarıyla oluşturuldu.' : 'E-Invoice generated successfully.', 'success');
+        } catch (error) {
+            addToast(language === 'tr' ? 'E-Fatura oluşturulamadı.' : 'Failed to generate E-Invoice.', 'error');
+        } finally {
+            setGeneratingId(null);
+        }
+    };
 
     const handleSave = async () => {
         if (newTransaction.amount <= 0) {
@@ -253,7 +266,28 @@ const PatientFinancials: React.FC<PatientFinancialsProps> = ({ patientId }) => {
                                     <td className={`px-6 py-4 text-right font-bold ${t.type === 'INCOME' ? 'text-teal-600' : 'text-red-600'}`}>
                                         {t.type === 'INCOME' ? '+' : '-'} ₺{t.amount.toLocaleString('tr-TR')}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right flex justify-end items-center gap-2">
+                                        {t.type === 'INCOME' && (
+                                            t.invoiceStatus === 'GENERATED' ? (
+                                                <a href={t.invoiceDocumentUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors" title={t.invoiceId}>
+                                                    <FileText className="w-3 h-3" /> Fatura
+                                                </a>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleGenerateInvoice(t.id)}
+                                                    disabled={generatingId === t.id}
+                                                    className="flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-1 rounded hover:bg-teal-100 transition-colors disabled:opacity-50"
+                                                    title="E-Fatura Kes"
+                                                >
+                                                    {generatingId === t.id ? (
+                                                        <div className="w-3 h-3 rounded-full border-2 border-teal-600 border-t-transparent animate-spin" />
+                                                    ) : (
+                                                        <FileText className="w-3 h-3" />
+                                                    )}
+                                                    <span>Kes</span>
+                                                </button>
+                                            )
+                                        )}
                                         <button
                                             onClick={() => deleteTransaction(t.id)}
                                             className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"

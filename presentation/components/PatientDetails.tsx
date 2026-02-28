@@ -11,6 +11,7 @@ import api from '../../infrastructure/services/ApiService';
 import PrescriptionList from './PrescriptionList';
 import PatientFinancials from './PatientFinancials';
 import PatientCommunicationLogs from './PatientCommunicationLogs';
+import PatientWhatsAppChat from './PatientWhatsAppChat';
 import { MessageSquare } from 'lucide-react';
 
 interface PatientDetailsProps {
@@ -350,7 +351,8 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                     )}
 
                     {activeTab === 'communication' && (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
+                            <PatientWhatsAppChat patientId={patientId} />
                             <PatientCommunicationLogs patientId={patientId} />
                         </div>
                     )}

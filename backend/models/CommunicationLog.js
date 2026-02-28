@@ -4,12 +4,17 @@ const CommunicationLogSchema = new mongoose.Schema({
     patientId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Patient',
-        required: true
+        required: false
     },
     type: {
         type: String,
-        enum: ['SMS', 'EMAIL', 'PUSH'],
+        enum: ['SMS', 'EMAIL', 'PUSH', 'WHATSAPP'],
         required: true
+    },
+    direction: {
+        type: String,
+        enum: ['INBOUND', 'OUTBOUND'],
+        default: 'OUTBOUND'
     },
     recipient: {
         type: String,

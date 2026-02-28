@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.txt
 
 node_modules
 dist
@@ -40,6 +41,8 @@ uploads/
 **/*.jks
 secrets.json
 firebase-adminsdk.json
+service-account.json
+credentials.json
 
 # Build results
 android/app/build

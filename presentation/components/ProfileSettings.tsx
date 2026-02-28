@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useUser } from '../context/UserContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { User, Mail, Building, FileBadge, Save, Camera, Check, LogOut, Key, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Building, FileBadge, Save, Camera, Check, LogOut, Key, Eye, EyeOff, X } from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 import NotificationSettings from './NotificationSettings';
 
@@ -12,24 +12,23 @@ const ProfileSettingsContent: React.FC = () => {
     const { t, language } = useLanguage();
     const [formData, setFormData] = useState(user);
     const [isSaved, setIsSaved] = useState(false);
-    const [apiKey, setApiKey] = useState('');
+    const [apiKey, setApiKey] = useState(user.geminiApiKey || '');
     const [showKey, setShowKey] = useState(false);
     const [keySaved, setKeySaved] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    React.useEffect(() => {
-        const storedKey = localStorage.getItem('denta_vision_gemini_key') || '';
-        setApiKey(storedKey);
-    }, []);
 
-    const handleSaveKey = () => {
-        if (apiKey.trim()) {
-            localStorage.setItem('denta_vision_gemini_key', apiKey.trim());
-        } else {
+
+    const handleSaveKey = async () => {
+        try {
+            await updateUser({ geminiApiKey: apiKey.trim() } as any);
+            // Clean up old insecure storage if it exists
             localStorage.removeItem('denta_vision_gemini_key');
+            setKeySaved(true);
+            setTimeout(() => setKeySaved(false), 3000);
+        } catch (error) {
+            console.error('Failed to save API key:', error);
         }
-        setKeySaved(true);
-        setTimeout(() => setKeySaved(false), 3000);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -50,11 +49,27 @@ const ProfileSettingsContent: React.FC = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        updateUser(formData);
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
+        try {
+            await updateUser(formData);
+            setIsSaved(true);
+            setTimeout(() => setIsSaved(false), 3000);
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+        }
+    };
+
+    const handleDeleteAvatar = async () => {
+        const updatedData = { ...formData, avatarUrl: '' };
+        setFormData(updatedData);
+        try {
+            await updateUser({ avatar: '' } as any);
+            setIsSaved(true);
+            setTimeout(() => setIsSaved(false), 3000);
+        } catch (error) {
+            console.error('Failed to delete avatar:', error);
+        }
     };
 
     // Labels based on language
@@ -84,14 +99,26 @@ const ProfileSettingsContent: React.FC = () => {
                                 <span>{formData.name.charAt(0)}</span>
                             )}
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="absolute bottom-0 right-0 p-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 shadow-md transition-colors"
-                            title={labels.changePhoto}
-                        >
-                            <Camera className="w-4 h-4" />
-                        </button>
+                        <div className="flex flex-col gap-2">
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute bottom-0 right-0 p-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 shadow-md transition-colors"
+                                title={labels.changePhoto}
+                            >
+                                <Camera className="w-4 h-4" />
+                            </button>
+                            {formData.avatarUrl && (
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteAvatar}
+                                    className="absolute -top-1 -right-1 p-1.5 bg-red-100 text-red-600 rounded-full hover:bg-red-200 shadow-sm border border-white transition-colors"
+                                    title={language === 'tr' ? 'Fotoğrafı Sil' : 'Delete Photo'}
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -246,8 +273,8 @@ const ProfileSettingsContent: React.FC = () => {
                     </div>
                     <p className="text-xs text-slate-500 mt-2">
                         {language === 'tr'
-                            ? 'Anahtarınız sadece bu cihazda saklanır ve sunucularımıza gönderilmez.'
-                            : 'Your key is stored only on this device and is never sent to our servers.'}
+                            ? 'Anahtarınız kullanıcı profilinizde güvenli bir şekilde saklanır ve sadece sizin oturumunuzda kullanılır.'
+                            : 'Your key is securely stored in your user profile and only used within your session.'}
                     </p>
                 </div>
             </div>

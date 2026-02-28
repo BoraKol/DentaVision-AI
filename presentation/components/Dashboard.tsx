@@ -36,10 +36,15 @@ const DashboardContent: React.FC<DashboardProps> = React.memo(({ onViewChange })
     const { getTodaysAppointments } = useAppointment();
     const [greeting, setGreeting] = useState('');
 
+    const [hasRequested, setHasRequested] = useState(false);
+
     useEffect(() => {
-        const appointments = getTodaysAppointments();
-        fetchBriefing(false, appointments);
-    }, [getTodaysAppointments]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (!hasRequested) {
+            const appointments = getTodaysAppointments();
+            fetchBriefing(false, appointments);
+            setHasRequested(true);
+        }
+    }, [getTodaysAppointments, hasRequested, fetchBriefing]);
 
     useEffect(() => {
         const updateGreeting = () => {

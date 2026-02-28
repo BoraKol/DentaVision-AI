@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 
 interface UserContextType {
     user: UserProfile;
-    updateUser: (updates: Partial<UserProfile>) => void;
+    updateUser: (updates: Partial<UserProfile>) => Promise<void>;
     isLoading: boolean;
 }
 
@@ -21,6 +21,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         specialty: authUser.specialty,
         email: authUser.email,
         clinicName: authUser.clinicName,
+        avatarUrl: authUser.avatar,
         preferences: {
             theme: authUser.preferences?.theme || 'light',
             notifications: authUser.preferences?.notifications ?? true

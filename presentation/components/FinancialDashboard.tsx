@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-    TrendingUp, TrendingDown, DollarSign, Plus,
-    Filter, Calendar as CalendarIcon, Download, Trash2,
-    PieChart as PieChartIcon, Users as UsersIcon, CreditCard
-} from 'lucide-react';
+import { Plus, PieChart as PieChartIcon, Users as UsersIcon, CreditCard } from 'lucide-react';
 import {
     PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
@@ -14,6 +10,10 @@ import api from '../../infrastructure/services/ApiService';
 import AddTransactionModal from './AddTransactionModal';
 import DeleteConfirmationModal from './common/DeleteConfirmationModal';
 
+// Imported Sub-components
+import FinancialStatsCards from './financial/FinancialStatsCards';
+import TransactionList from './financial/TransactionList';
+
 interface Transaction {
     _id: string;
     type: 'INCOME' | 'EXPENSE';
@@ -22,6 +22,9 @@ interface Transaction {
     date: string;
     description: string;
     paymentMethod: string;
+    invoiceStatus?: 'PENDING' | 'GENERATED' | 'FAILED';
+    invoiceDocumentUrl?: string;
+    invoiceId?: string;
 }
 
 const FinancialDashboard: React.FC = () => {
@@ -86,6 +89,11 @@ const FinancialDashboard: React.FC = () => {
         return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(amount);
     };
 
+    const invoicedIncome = transactions
+        .filter(t => t.type === 'INCOME' && t.invoiceStatus === 'GENERATED')
+        .reduce((sum, t) => sum + t.amount, 0);
+    const nonInvoicedIncome = (stats?.income || 0) - invoicedIncome;
+
     if (loading) return <div className="p-8 text-center text-slate-500">Yükleniyor...</div>;
 
     return (
@@ -133,39 +141,13 @@ const FinancialDashboard: React.FC = () => {
 
             {/* Overview Tab Content */}
             {activeTab === 'overview' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                        <div className="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center mr-4">
-                            <TrendingUp className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Toplam Gelir' : 'Total Income'}</p>
-                            <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats?.income || 0)}</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center">
-                        <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center mr-4">
-                            <TrendingDown className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Toplam Gider' : 'Total Expense'}</p>
-                            <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats?.expense || 0)}</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center ring-2 ring-teal-500/20">
-                        <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center mr-4">
-                            <DollarSign className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-500">{language === 'tr' ? 'Net Bakiye' : 'Net Balance'}</p>
-                            <p className={`text-2xl font-bold ${(stats?.balance || 0) >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
-                                {formatCurrency(stats?.balance || 0)}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                <FinancialStatsCards
+                    stats={stats}
+                    invoicedIncome={invoicedIncome}
+                    nonInvoicedIncome={nonInvoicedIncome}
+                    formatCurrency={formatCurrency}
+                    language={language}
+                />
             )}
 
             {/* Doctor Performance Tab */}
@@ -265,71 +247,12 @@ const FinancialDashboard: React.FC = () => {
             )}
 
             {/* Transactions Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h3 className="font-bold text-slate-800">{language === 'tr' ? 'Son İşlemler' : 'Recent Transactions'}</h3>
-                    <div className="flex items-center gap-2">
-                        <button className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg">
-                            <Filter className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                                <th className="px-6 py-3 font-semibold">{language === 'tr' ? 'Tarih' : 'Date'}</th>
-                                <th className="px-6 py-3 font-semibold">{language === 'tr' ? 'Kategori' : 'Category'}</th>
-                                <th className="px-6 py-3 font-semibold">{language === 'tr' ? 'Açıklama' : 'Description'}</th>
-                                <th className="px-6 py-3 font-semibold">{language === 'tr' ? 'Yöntem' : 'Method'}</th>
-                                <th className="px-6 py-3 font-semibold text-right">{language === 'tr' ? 'Tutar' : 'Amount'}</th>
-                                <th className="px-6 py-3 font-semibold text-center">İşlem</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {transactions.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-10 text-center text-slate-400 italic">
-                                        Henüz işlem kaydı bulunmuyor.
-                                    </td>
-                                </tr>
-                            ) : (
-                                transactions.map((t) => (
-                                    <tr key={t._id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-4 text-sm text-slate-600">
-                                            {new Date(t.date).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-md text-xs font-medium ${t.type === 'INCOME' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                                                }`}>
-                                                {t.category}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-slate-700 font-medium">
-                                            {t.description || '-'}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs text-slate-500 font-medium uppercase">
-                                            {t.paymentMethod.replace('_', ' ')}
-                                        </td>
-                                        <td className={`px-6 py-4 text-sm font-bold text-right ${t.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                            {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => handleDeleteClick(t._id)}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <TransactionList
+                transactions={transactions}
+                formatCurrency={formatCurrency}
+                onDeleteClick={handleDeleteClick}
+                language={language}
+            />
 
             <AddTransactionModal
                 isOpen={isAddModalOpen}

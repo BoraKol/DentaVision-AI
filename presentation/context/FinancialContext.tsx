@@ -12,6 +12,9 @@ export interface Transaction {
     patientId?: string;
     treatmentId?: string;
     paymentMethod: 'CASH' | 'CREDIT_CARD' | 'INSURANCE' | 'TRANSFER';
+    invoiceStatus?: 'PENDING' | 'GENERATED' | 'FAILED';
+    invoiceId?: string;
+    invoiceDocumentUrl?: string;
 }
 
 interface FinancialContextType {
@@ -20,6 +23,7 @@ interface FinancialContextType {
     fetchPatientTransactions: (patientId: string) => Promise<void>;
     addTransaction: (data: Omit<Transaction, 'id' | 'date'>) => Promise<void>;
     deleteTransaction: (id: string) => Promise<void>;
+    generateInvoice: (id: string) => Promise<void>;
     totals: {
         income: number;
         expense: number;
@@ -85,6 +89,17 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
     };
 
+    const generateInvoice = async (id: string) => {
+        try {
+            const response = await financialsAPI.generateInvoice(id);
+            const updatedTx = response.data.data;
+            setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updatedTx, id: updatedTx._id } : t));
+        } catch (error) {
+            console.error('Failed to generate invoice', error);
+            throw error;
+        }
+    };
+
     const totals = transactions.reduce((acc, curr) => {
         if (curr.type === 'INCOME') acc.income += curr.amount;
         else acc.expense += curr.amount;
@@ -99,6 +114,7 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
             fetchPatientTransactions,
             addTransaction,
             deleteTransaction,
+            generateInvoice,
             totals
         }}>
             {children}

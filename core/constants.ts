@@ -6,8 +6,8 @@ export const APP_CONSTANTS = {
         RETRY_ATTEMPTS: 3
     },
     MODELS: {
-        TEXT: "gemini-2.0-flash",
-        VISION: "gemini-2.0-flash"
+        TEXT: "gemini-flash-latest",
+        VISION: "gemini-flash-latest"
     }
 };
 

@@ -35,9 +35,16 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor - Handle errors
+// Response interceptor - Handle errors and standardize data
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // If the response follows our standard { success, data, message } format, 
+        // return only the data to the caller for backward compatibility and cleanliness
+        if (response.data && response.data.success === true && response.data.data !== undefined) {
+            return { ...response, data: response.data.data };
+        }
+        return response;
+    },
     (error) => {
         if (error.response?.status === 401) {
             const isPortalRequest = error.config.url?.includes('/portal');
@@ -138,7 +145,9 @@ export const financialsAPI = {
 
     delete: (id: string) => api.delete(`/financials/${id}`),
 
-    getStats: () => api.get('/financials/stats')
+    getStats: () => api.get('/financials/stats'),
+
+    generateInvoice: (id: string) => api.post(`/financials/${id}/invoice`)
 };
 
 // Inventory API

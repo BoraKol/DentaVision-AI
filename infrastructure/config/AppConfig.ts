@@ -1,16 +1,26 @@
 export class AppConfig {
     static get GEMINI_API_KEY(): string {
-        // First check local storage (User provided key)
-        const localKey = localStorage.getItem('denta_vision_gemini_key');
-        if (localKey) return localKey;
+        // First check stored user profile (Secure database storage)
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                const user = JSON.parse(storedUser);
+                if (user.geminiApiKey) {
+                    console.log("[AppConfig] Using SECURE Gemini API Key from User Profile");
+                    return user.geminiApiKey;
+                }
+            } catch (e) {
+                console.error('Failed to parse user for API key');
+            }
+        }
 
         // Fallback to environment variables
         const key = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
 
         if (!key) {
-            // Don't warn here to avoid spamming console if user hasn't set it yet
             return '';
         }
+        console.log("[AppConfig] Using DEFAULT Gemini API Key from environment");
         return key;
     }
 

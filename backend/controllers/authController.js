@@ -1,13 +1,14 @@
 const authService = require('../services/authService');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const { sendResponse } = require('../utils/apiResponse');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
 const register = catchAsync(async (req, res, next) => {
     const user = await authService.register(req.body);
-    res.status(201).json(user);
+    sendResponse(res, 201, user, 'User registered successfully');
 });
 
 // @desc    Auth user & get token
@@ -15,7 +16,7 @@ const register = catchAsync(async (req, res, next) => {
 // @access  Public
 const login = catchAsync(async (req, res, next) => {
     const user = await authService.login(req.body.email, req.body.password);
-    res.json(user);
+    sendResponse(res, 200, user, 'Login successful');
 });
 
 // @desc    Get current user profile
@@ -23,7 +24,7 @@ const login = catchAsync(async (req, res, next) => {
 // @access  Private
 const getMe = catchAsync(async (req, res, next) => {
     const user = await authService.getMe(req.user._id);
-    res.json(user);
+    sendResponse(res, 200, user);
 });
 
 // @desc    Update user profile
@@ -34,7 +35,7 @@ const updateProfile = catchAsync(async (req, res, next) => {
     if (!user) {
         return next(new AppError('User not found', 404));
     }
-    res.json(user);
+    sendResponse(res, 200, user, 'Profile updated successfully');
 });
 
 module.exports = {

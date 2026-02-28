@@ -15,6 +15,7 @@ export interface User {
         language?: 'en' | 'tr';
         notifications?: boolean;
     };
+    geminiApiKey?: string;
 }
 
 interface AuthContextType {

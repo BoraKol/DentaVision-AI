@@ -1,18 +1,19 @@
-const User = require('../models/User');
+const userRepository = require('../repositories/UserRepository');
 const generateToken = require('../utils/generateToken');
+const AppError = require('../utils/AppError');
 
 class AuthService {
     async register(data) {
         const { email, password, name, title, specialty, clinicName } = data;
 
         // Check if user exists
-        const userExists = await User.findOne({ email });
+        const userExists = await userRepository.findByEmail(email);
         if (userExists) {
-            throw new Error('User already exists');
+            throw new AppError('User already exists', 400);
         }
 
         // Create user
-        const user = await User.create({
+        const user = await userRepository.create({
             email,
             password,
             name,
@@ -38,7 +39,7 @@ class AuthService {
 
     async login(email, password) {
         // Check for user email
-        const user = await User.findOne({ email });
+        const user = await userRepository.findByEmail(email);
 
         if (user && (await user.matchPassword(password))) {
             return {
@@ -54,16 +55,16 @@ class AuthService {
                 token: generateToken(user._id)
             };
         } else {
-            throw new Error('Invalid email or password');
+            throw new AppError('Invalid email or password', 401);
         }
     }
 
     async getMe(userId) {
-        return await User.findById(userId).select('-password');
+        return await userRepository.findByIdWithSelect(userId);
     }
 
     async updateProfile(userId, data) {
-        const user = await User.findById(userId);
+        const user = await userRepository.findById(userId);
 
         if (user) {
             user.name = data.name || user.name;
@@ -91,10 +92,11 @@ class AuthService {
                 clinicName: updatedUser.clinicName,
                 role: updatedUser.role,
                 avatar: updatedUser.avatar,
-                preferences: updatedUser.preferences
+                preferences: updatedUser.preferences,
+                geminiApiKey: updatedUser.geminiApiKey
             };
         } else {
-            throw new Error('User not found');
+            throw new AppError('User not found', 404);
         }
     }
 }
