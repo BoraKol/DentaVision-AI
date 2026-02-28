@@ -1,15 +1,18 @@
 export interface UserProfile {
     id: string;
     name: string;
-    title: string; // e.g., "Dr.", "DDS", "BDS"
-    specialty: string; // e.g., "General Dentist", "Orthodontist"
     email: string;
-    licenseNumber: string;
+    title: string;
+    specialty: string;
     clinicName: string;
-    avatarUrl?: string; // Base64 or URL
+    avatarUrl?: string;
+    commissionRate?: number;
+    licenseNumber: string;
     preferences: {
         theme: 'light' | 'dark';
         notifications: boolean;
     };
-    geminiApiKey?: string; // Stored locally, not in DB
+    geminiApiKey?: string;
+    branches: string[];
+    activeBranch: string;
 }

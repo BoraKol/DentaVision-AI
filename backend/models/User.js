@@ -65,6 +65,14 @@ const userSchema = new mongoose.Schema({
     geminiApiKey: {
         type: String,
         default: ''
+    },
+    branches: {
+        type: [String],
+        default: ['Main Branch']
+    },
+    activeBranch: {
+        type: String,
+        default: 'Main Branch'
     }
 }, {
     timestamps: true

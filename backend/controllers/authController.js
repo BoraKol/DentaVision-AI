@@ -46,10 +46,23 @@ const getApiKey = catchAsync(async (req, res, next) => {
     sendResponse(res, 200, { apiKey }, 'API Key retrieved safely');
 });
 
+// @desc    Update active branch
+// @route   PUT /api/auth/active-branch
+// @access  Private
+const updateActiveBranch = catchAsync(async (req, res, next) => {
+    const { branchName } = req.body;
+    if (!branchName) {
+        return next(new AppError('Branch name is required', 400));
+    }
+    const user = await authService.updateActiveBranch(req.user._id, branchName);
+    sendResponse(res, 200, user, 'Active branch updated successfully');
+});
+
 module.exports = {
     register,
     login,
     getMe,
     updateProfile,
-    getApiKey
+    getApiKey,
+    updateActiveBranch
 };

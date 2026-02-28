@@ -26,6 +26,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             theme: authUser.preferences?.theme || 'light',
             notifications: authUser.preferences?.notifications ?? true
         },
+        branches: authUser.branches || ['Main Branch'],
+        activeBranch: authUser.activeBranch || 'Main Branch',
         licenseNumber: '' // Not in AuthUser yet, default empty
     } : {
         // Fallback or empty state if needed, though AuthenticatedApp prevents null authUser
@@ -36,6 +38,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: '',
         clinicName: '',
         preferences: { theme: 'light', notifications: true },
+        branches: ['Main Branch'],
+        activeBranch: 'Main Branch',
         licenseNumber: ''
     };
 

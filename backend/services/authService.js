@@ -32,6 +32,8 @@ class AuthService {
                 clinicName: user.clinicName,
                 role: user.role,
                 preferences: user.preferences,
+                branches: user.branches,
+                activeBranch: user.activeBranch,
                 token: generateToken(user._id)
             };
         }
@@ -52,6 +54,8 @@ class AuthService {
                 role: user.role,
                 avatar: user.avatar,
                 preferences: user.preferences,
+                branches: user.branches,
+                activeBranch: user.activeBranch,
                 token: generateToken(user._id)
             };
         } else {
@@ -94,6 +98,8 @@ class AuthService {
                 role: updatedUser.role,
                 avatar: updatedUser.avatar,
                 preferences: updatedUser.preferences,
+                branches: updatedUser.branches,
+                activeBranch: updatedUser.activeBranch,
                 geminiApiKey: updatedUser.geminiApiKey 
                     ? `${updatedUser.geminiApiKey.substring(0, 8)}...****` 
                     : ''
@@ -106,6 +112,21 @@ class AuthService {
     async getRawApiKey(userId) {
         const user = await userRepository.findByIdWithSelect(userId, '+geminiApiKey');
         return user ? user.geminiApiKey : '';
+    }
+
+    async updateActiveBranch(userId, branchName) {
+        const user = await userRepository.findById(userId);
+        if (!user) {
+            throw new AppError('User not found', 404);
+        }
+
+        if (!user.branches.includes(branchName)) {
+            throw new AppError('Branch not authorized for this user', 403);
+        }
+
+        user.activeBranch = branchName;
+        await user.save();
+        return user;
     }
 }
 

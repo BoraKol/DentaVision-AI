@@ -16,6 +16,8 @@ export interface User {
         notifications?: boolean;
     };
     geminiApiKey?: string;
+    branches: string[];
+    activeBranch: string;
 }
 
 interface AuthContextType {

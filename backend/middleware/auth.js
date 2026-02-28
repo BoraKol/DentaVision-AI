@@ -20,6 +20,14 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
 
+            // Set active branch (header override or user's default)
+            const branchHeader = req.headers['x-branch'];
+            if (branchHeader && req.user.branches.includes(branchHeader)) {
+                req.activeBranch = branchHeader;
+            } else {
+                req.activeBranch = req.user.activeBranch || 'Main Branch';
+            }
+
             next();
         } catch (error) {
             console.error('[Auth Error] Token verification failed:', error.message);

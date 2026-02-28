@@ -48,6 +48,8 @@ const PatientLogin = React.lazy(() => import('./pages/portal/PatientLogin'));
 const PatientDashboard = React.lazy(() => import('./pages/portal/PatientDashboard'));
 const Inventory = React.lazy(() => import('./components/Inventory'));
 const LabTracking = React.lazy(() => import('./components/LabTracking'));
+const TaskBoard = React.lazy(() => import('./components/TaskBoard'));
+import { TaskProvider } from './context/TaskContext';
 
 
 
@@ -99,6 +101,8 @@ const AppContent: React.FC = () => {
                 return <Inventory />;
             case View.LAB_TRACKING:
                 return <LabTracking />;
+            case View.TASKS:
+                return <TaskBoard />;
             case View.SETTINGS:
                 return <ProfileSettings />;
             default:
@@ -191,7 +195,9 @@ const AuthenticatedApp: React.FC = () => {
                         <TreatmentProvider>
                             <PrescriptionProvider>
                                 <InventoryProvider>
-                                    <AppContent />
+                                    <TaskProvider>
+                                        <AppContent />
+                                    </TaskProvider>
                                 </InventoryProvider>
                             </PrescriptionProvider>
                         </TreatmentProvider>
