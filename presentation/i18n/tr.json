@@ -14,7 +14,15 @@
         "treatmentHistory": "Tedavi Geçmişi",
         "financial": "Finansal Durum",
         "security": "Güvenlik",
-        "communication": "İletişim"
+        "communication": "İletişim",
+        "general": "Genel",
+        "clinical": "Klinik",
+        "management": "Yönetim",
+        "branchSelection": "Şube Seçimi",
+        "allBranches": "Tüm Şubeler",
+        "labTracking": "Laboratuvar",
+        "inventory": "Stok Yönetimi",
+        "tasks": "Görev Takibi"
     },
     "common": {
         "save": "Kaydet",
@@ -156,7 +164,8 @@
         "antibioticGuide": "Antibiyotik Profilaksisi ile ilgili güncel rehberler yayınlandı.",
         "readGuide": "Rehberi Oku",
         "urgency": "Aciliyet",
-        "noPatientsToday": "Bugün bekleyen bir randevu bulunmuyor."
+        "noPatientsToday": "Bugün bekleyen bir randevu bulunmuyor.",
+        "aiStatus": "Yapay Zeka Hazır"
     },
     "calendar": {
         "months": [

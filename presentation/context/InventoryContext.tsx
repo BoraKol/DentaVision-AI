@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useUser } from './UserContext';
+import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
+
 import { inventoryAPI } from '../../infrastructure/services/ApiService';
 
 export interface InventoryItem {
@@ -32,10 +33,12 @@ const InventoryContext = createContext<InventoryContextType | undefined>(undefin
 export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [items, setItems] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const { user } = useUser();
+    const { isAuthenticated } = useAuth();
     const { addToast } = useToast();
 
     const fetchItems = async () => {
+        if (!isAuthenticated) return;
+        setLoading(true);
         try {
             const res = await inventoryAPI.getAll();
             if (res.data.success) {
@@ -43,7 +46,10 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             }
         } catch (error) {
             console.error('Error fetching inventory:', error);
-            addToast('Stok listesi alınamadı', 'error');
+            // Don't show toast if it's a 401 inside login page or during logout
+            if ((error as any)?.response?.status !== 401) {
+                addToast('Stok listesi alınamadı', 'error');
+            }
         } finally {
             setLoading(false);
         }
@@ -102,10 +108,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     useEffect(() => {
-        if (user) {
+        if (isAuthenticated) {
             fetchItems();
+        } else {
+            setItems([]);
         }
-    }, [user]);
+    }, [isAuthenticated]);
 
     return (
         <InventoryContext.Provider value={{ items, loading, fetchItems, addItem, updateItem, deleteItem, addTransaction }}>

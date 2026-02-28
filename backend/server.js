@@ -1,8 +1,13 @@
 require('dotenv').config();
+const sanitizeEnv = require('./utils/envSanitizer');
+// Run env sanitization before starting the server
+sanitizeEnv();
+
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+
 
 const path = require('path'); // Add path module
 const logger = require('./utils/logger'); // Import Winston logger

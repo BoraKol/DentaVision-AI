@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     UserPlus,
@@ -18,6 +19,7 @@ import {
 import { useUser } from '../../context/UserContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import BranchSwitcher from './BranchSwitcher';
 
 export enum View {
     DASHBOARD = 'DASHBOARD',
@@ -35,19 +37,17 @@ export enum View {
 }
 
 interface SidebarProps {
-    currentView: View;
-    onViewChange: (view: View) => void;
     isOpen: boolean;
     onClose: () => void;
     isCollapsed: boolean;
 }
 
-import BranchSwitcher from './BranchSwitcher';
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, onClose, isCollapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed }) => {
     const { user } = useUser();
     const { t, language } = useLanguage();
     const { logout } = useAuth();
+    const location = useLocation();
 
     const iconColors: Record<string, string> = {
         [View.DASHBOARD]: 'text-blue-600',
@@ -64,16 +64,29 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, on
         [View.SETTINGS]: 'text-slate-600',
     };
 
+    const viewPaths: Record<string, string> = {
+        [View.DASHBOARD]: '/',
+        [View.PATIENTS]: '/patients',
+        [View.CALENDAR]: '/calendar',
+        [View.INTAKE]: '/intake',
+        [View.IMAGING]: '/imaging',
+        [View.TREATMENT]: '/treatment',
+        [View.FINANCIALS]: '/financials',
+        [View.INVENTORY]: '/inventory',
+        [View.LAB_TRACKING]: '/lab-tracking',
+        [View.TASKS]: '/tasks',
+        [View.SETTINGS]: '/settings',
+    };
+
     const NavItem = ({ view, icon: Icon, label }: { view: View; icon: React.ElementType; label: string }) => {
-        const isActive = currentView === view;
+        const path = viewPaths[view] || '/';
+        const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
         const iconColor = iconColors[view] || 'text-slate-600';
 
         return (
-            <button
-                onClick={() => {
-                    onViewChange(view);
-                    onClose();
-                }}
+            <Link
+                to={path}
+                onClick={onClose}
                 className={`group flex items-center ${isCollapsed ? 'justify-center w-12 h-12 mx-auto' : 'w-full px-4'} py-3 mb-1 text-sm font-medium transition-all rounded-xl duration-200 ${isActive
                     ? 'bg-slate-100 text-slate-900'
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
@@ -85,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, on
                     <Icon className={`w-5 h-5 ${isActive ? iconColor : 'text-slate-400 group-hover:' + iconColor}`} />
                 </div>
                 {!isCollapsed && <span className="whitespace-nowrap">{label}</span>}
-            </button>
+            </Link>
         );
     };
 
@@ -98,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, on
                 shadow-2xl lg:shadow-none pt-[env(safe-area-inset-top)] lg:pt-0 overflow-hidden`}
         >
             <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} h-20 px-6 border-b border-slate-100`}>
-                <div className="flex items-center space-x-3 text-slate-800">
+                <Link to="/" className="flex items-center space-x-3 text-slate-800">
                     <div className="w-10 h-10 shrink-0 bg-teal-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-200">
                         <Stethoscope className="w-6 h-6" />
                     </div>
@@ -108,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, on
                             <span className="text-xs text-teal-600 font-semibold tracking-wide">AI PLATFORM</span>
                         </div>
                     )}
-                </div>
+                </Link>
                 <button onClick={onClose} className="lg:hidden text-slate-400 hover:text-slate-600">
                     <X className="w-6 h-6" />
                 </button>
@@ -119,7 +132,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, on
             <nav className="p-4 space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden">
                 {!isCollapsed ? (
                     <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        {language === 'tr' ? 'Genel' : 'General'}
+                        {t('app.general')}
                     </div>
                 ) : <div className="h-6"></div>}
                 <NavItem view={View.DASHBOARD} icon={LayoutDashboard} label={t('app.dashboard')} />
@@ -128,27 +141,28 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, on
 
                 {!isCollapsed ? (
                     <div className="mt-6 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        {language === 'tr' ? 'Klinik' : 'Clinical'}
+                        {t('app.clinical')}
                     </div>
                 ) : <div className="mt-6 border-t border-slate-100 mb-2"></div>}
                 <NavItem view={View.INTAKE} icon={UserPlus} label={t('app.intake')} />
                 <NavItem view={View.IMAGING} icon={ScanLine} label={t('app.imaging')} />
                 <NavItem view={View.TREATMENT} icon={FileText} label={t('app.treatment')} />
-                <NavItem view={View.LAB_TRACKING} icon={FlaskConical} label={language === 'tr' ? 'Laboratuvar' : 'Lab Tracking'} />
+                <NavItem view={View.LAB_TRACKING} icon={FlaskConical} label={t('app.labTracking')} />
 
                 {!isCollapsed ? (
                     <div className="mt-6 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        {language === 'tr' ? 'Yönetim' : 'Management'}
+                        {t('app.management')}
                     </div>
                 ) : <div className="mt-6 border-t border-slate-100 mb-2"></div>}
-                <NavItem view={View.FINANCIALS} icon={PieChart} label={language === 'tr' ? 'Mali Raporlar' : 'Financials'} />
-                <NavItem view={View.INVENTORY} icon={Package} label={language === 'tr' ? 'Stok Yönetimi' : 'Inventory'} />
+                <NavItem view={View.FINANCIALS} icon={PieChart} label={t('app.financial')} />
+                <NavItem view={View.INVENTORY} icon={Package} label={t('app.inventory')} />
 
                 <div className="pt-4 mt-4 border-t border-slate-100">
-                    <NavItem view={View.TASKS} icon={ListTodo} label={language === 'tr' ? 'Görev Takibi' : 'Task Tracking'} />
+                    <NavItem view={View.TASKS} icon={ListTodo} label={t('app.tasks')} />
                     <NavItem view={View.SETTINGS} icon={Settings} label={t('app.settings')} />
                 </div>
             </nav>
+
 
             <div className={`flex-none ${isCollapsed ? 'p-2' : 'p-4'} border-t border-slate-100 bg-slate-50 pb-20 lg:pb-4 mb-[env(safe-area-inset-bottom)]`}>
                 <div className={`flex ${isCollapsed ? 'justify-center' : 'items-center space-x-3'} mb-4`}>

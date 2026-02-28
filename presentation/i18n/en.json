@@ -14,7 +14,15 @@
         "treatmentHistory": "Treatment History",
         "financial": "Financial Status",
         "security": "Security",
-        "communication": "Communication"
+        "communication": "Communication",
+        "general": "General",
+        "clinical": "Clinical",
+        "management": "Management",
+        "branchSelection": "Branch Selection",
+        "allBranches": "All Branches",
+        "labTracking": "Lab Tracking",
+        "inventory": "Inventory",
+        "tasks": "Task Tracking"
     },
     "common": {
         "save": "Save",
@@ -156,7 +164,8 @@
         "antibioticGuide": "Updated guidelines on Antibiotic Prophylaxis have been published.",
         "readGuide": "Read Guide",
         "urgency": "Urgency",
-        "noPatientsToday": "No appointments scheduled for today."
+        "noPatientsToday": "No appointments scheduled for today.",
+        "aiStatus": "AI Companion Ready"
     },
     "calendar": {
         "months": [

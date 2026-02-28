@@ -54,10 +54,13 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         } catch (error) {
             console.error('Error fetching tasks:', error);
-            addToast('Görevler yüklenirken hata oluştu', 'error');
+            if ((error as any)?.response?.status !== 401) {
+                addToast('Görevler yüklenirken hata oluştu', 'error');
+            }
         } finally {
             setLoading(false);
         }
+
     }, [token, user, addToast]);
 
     useEffect(() => {

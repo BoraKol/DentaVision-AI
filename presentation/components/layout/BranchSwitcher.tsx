@@ -4,6 +4,7 @@ import { useUser } from '../../context/UserContext';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface BranchSwitcherProps {
     isCollapsed: boolean;
@@ -13,6 +14,7 @@ const BranchSwitcher: React.FC<BranchSwitcherProps> = ({ isCollapsed }) => {
     const { user, updateUser } = useUser();
     const { token } = useAuth();
     const { addToast } = useToast();
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -65,8 +67,8 @@ const BranchSwitcher: React.FC<BranchSwitcherProps> = ({ isCollapsed }) => {
                                 key={branch}
                                 onClick={() => handleBranchSwitch(branch)}
                                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${user.activeBranch === branch
-                                        ? 'bg-teal-50 text-teal-700'
-                                        : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-teal-50 text-teal-700'
+                                    : 'text-slate-600 hover:bg-slate-50'
                                     }`}
                             >
                                 <span className="truncate">{branch}</span>
@@ -91,7 +93,7 @@ const BranchSwitcher: React.FC<BranchSwitcherProps> = ({ isCollapsed }) => {
                         <MapPin className="w-4 h-4" />
                     </div>
                     <div className="text-left min-w-0">
-                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">ŞUBE Seçimi</span>
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">{t('app.branchSelection')}</span>
                         <span className="block text-sm font-bold text-slate-700 truncate">{user.activeBranch}</span>
                     </div>
                 </div>
@@ -102,14 +104,14 @@ const BranchSwitcher: React.FC<BranchSwitcherProps> = ({ isCollapsed }) => {
                 <>
                     <div className="fixed inset-0 z-[55]" onClick={() => setIsOpen(false)} />
                     <div className="absolute left-4 right-4 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 p-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">TÜM ŞUBELER</div>
+                        <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('app.allBranches')}</div>
                         {user.branches.map((branch) => (
                             <button
                                 key={branch}
                                 onClick={() => handleBranchSwitch(branch)}
                                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${user.activeBranch === branch
-                                        ? 'bg-teal-50 text-teal-700'
-                                        : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-teal-50 text-teal-700'
+                                    : 'text-slate-600 hover:bg-slate-50'
                                     }`}
                             >
                                 <div className="flex items-center space-x-2">

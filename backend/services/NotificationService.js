@@ -1,21 +1,15 @@
-const nodemailer = require('nodemailer');
 const path = require('path');
 const CommunicationLog = require('../models/CommunicationLog');
-const smsService = require('./smsService'); // Import the new SmsService
+const EmailStrategy = require('./notification/EmailStrategy');
+const SmsStrategy = require('./notification/SmsStrategy');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 class NotificationService {
     constructor() {
-        this.transporter = nodemailer.createTransport({
-            service: process.env.SMTP_SERVICE || 'gmail',
-            host: process.env.SMTP_HOST || 'smtp.gmail.com',
-            port: process.env.SMTP_PORT || 587,
-            secure: process.env.SMTP_SECURE === 'true',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            }
-        });
+        this.strategies = {
+            email: new EmailStrategy(),
+            sms: new SmsStrategy()
+        };
     }
 
     async logCommunication(patientId, type, recipient, message, status, title = '') {
@@ -35,53 +29,22 @@ class NotificationService {
     }
 
     async sendSMS(patientId, phoneNumber, message) {
-        try {
-            const result = await smsService.send(phoneNumber, message);
-            
-            if (patientId) {
-                await this.logCommunication(patientId, 'SMS', phoneNumber, message, result.success ? 'SENT' : 'FAILED');
-            }
-            return result;
-        } catch (error) {
-            console.error('SMS Send Error in NotificationService:', error);
-            if (patientId) {
-                await this.logCommunication(patientId, 'SMS', phoneNumber, message, 'FAILED');
-            }
-            return { success: false, error: error.message };
+        const result = await this.strategies.sms.send(phoneNumber, message);
+        
+        if (patientId) {
+            await this.logCommunication(patientId, 'SMS', phoneNumber, message, result.success ? 'SENT' : 'FAILED');
         }
+        return result;
     }
 
     async sendEmail(patientId, to, subject, htmlContent) {
-        let success = false;
-        let errorMsg = '';
-
-        // Check credentials
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-            console.warn('⚠️ SMTP credentials not set. Email simulation:');
-            console.log(`To: ${to}`);
-            console.log(`Subject: ${subject}`);
-            success = true; // Pretend success in dev
-        } else {
-            try {
-                const info = await this.transporter.sendMail({
-                    from: process.env.SMTP_FROM || `"DentaVision AI" <${process.env.SMTP_USER}>`,
-                    to: to,
-                    subject: subject,
-                    html: htmlContent
-                });
-                console.log('✅ Email sent: %s', info.messageId);
-                success = true;
-            } catch (error) {
-                console.error('❌ Error sending email:', error);
-                errorMsg = error.message;
-            }
-        }
-
+        const result = await this.strategies.email.send(to, '', { subject, html: htmlContent });
+        
         if (patientId) {
-            await this.logCommunication(patientId, 'EMAIL', to, 'HTML Content', success ? 'SENT' : 'FAILED', subject);
+            await this.logCommunication(patientId, 'EMAIL', to, 'HTML Content', result.success ? 'SENT' : 'FAILED', subject);
         }
 
-        return { success, error: errorMsg };
+        return result;
     }
 
     // Template for appointment reminder
@@ -120,3 +83,4 @@ class NotificationService {
 }
 
 module.exports = new NotificationService();
+
