@@ -28,6 +28,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
+const xss = require('xss-clean');
 
 // Enable CORS
 app.use(cors({
@@ -56,6 +57,9 @@ app.use((req, res, next) => {
 
 // Prevent HTTP Param Pollution
 app.use(hpp());
+
+// Data sanitization against XSS
+app.use(xss());
 
 // Rate limiting
 const limiter = rateLimit({
