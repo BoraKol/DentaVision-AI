@@ -1,6 +1,6 @@
 const TransactionRepository = require('../repositories/TransactionRepository');
 const EInvoiceService = require('./EInvoiceService');
-const Patient = require('../models/Patient'); // Needed for generic populating unless we add a PatientRepo dependency
+const patientRepository = require('../repositories/PatientRepository');
 const ErrorResponse = require('../utils/AppError');
 
 class FinancialsService {
@@ -124,7 +124,7 @@ class FinancialsService {
 
         let patient = null;
         if (transaction.patientId) {
-            patient = await Patient.findById(transaction.patientId);
+            patient = await patientRepository.findById(transaction.patientId);
         }
 
         try {

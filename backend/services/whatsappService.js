@@ -1,5 +1,5 @@
-const CommunicationLog = require('../models/CommunicationLog');
-const Patient = require('../models/Patient');
+const communicationLogRepository = require('../repositories/CommunicationLogRepository');
+const patientRepository = require('../repositories/PatientRepository');
 
 class WhatsAppService {
     constructor() {
@@ -29,14 +29,15 @@ class WhatsAppService {
                 sentAt: Date.now()
             };
             if (patientId) logData.patientId = patientId;
-            await CommunicationLog.create(logData);
+            
+            await communicationLogRepository.create(logData);
 
             return true;
         } catch (error) {
             console.error('WhatsApp send error:', error);
             
             // Log failed attempt
-            await CommunicationLog.create({
+            await communicationLogRepository.create({
                 patientId,
                 type: 'WHATSAPP',
                 direction: 'OUTBOUND',
@@ -70,8 +71,10 @@ class WhatsAppService {
             sentAt: Date.now()
         };
         if (patientId) logData.patientId = patientId;
-        await CommunicationLog.create(logData);
+        
+        await communicationLogRepository.create(logData);
     }
 }
 
 module.exports = new WhatsAppService();
+

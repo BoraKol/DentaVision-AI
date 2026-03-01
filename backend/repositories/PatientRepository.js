@@ -10,6 +10,12 @@ class PatientRepository extends BaseRepository {
     async findWithUserDetails(clinicName, skip = 0, limit = 0) {
         return await this.findAll({ clinicName }, 'userId', { createdAt: -1 }, skip, limit);
     }
+
+    async findByPhone(phone, clinicName = null) {
+        const filter = { phone };
+        if (clinicName) filter.clinicName = clinicName;
+        return await this.findOne(filter);
+    }
 }
 
 module.exports = new PatientRepository();

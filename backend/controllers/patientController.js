@@ -3,7 +3,6 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const { sendResponse } = require('../utils/apiResponse');
 const eventBus = require('../events/eventBus');
-const CommunicationLog = require('../models/CommunicationLog');
 
 // @desc    Get all patients
 // @route   GET /api/patients
@@ -66,7 +65,7 @@ const deletePatient = catchAsync(async (req, res, next) => {
 // @route   GET /api/patients/:id/communication-logs
 // @access  Private
 const getCommunicationLogs = catchAsync(async (req, res, next) => {
-    const logs = await CommunicationLog.find({ patientId: req.params.id }).sort({ sentAt: -1 });
+    const logs = await patientService.getPatientCommunicationLogs(req.params.id);
     sendResponse(res, 200, logs, 'Communication logs retrieved');
 });
 

@@ -29,7 +29,7 @@ interface PatientContextType {
     deletePatient: (id: string) => void;
     selectPatient: (id: string | null) => void;
     getPatientById: (id: string) => PatientWithHistory | undefined;
-    addAnalysisToPatient: (patientId: string, analysis: { diagnosis: string; findings: string[] }) => void;
+    addAnalysisToPatient: (patientId: string, analysis: { diagnosis: string; findings: string[] }) => Promise<void>;
 }
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);

@@ -6,6 +6,8 @@ export interface Patient {
     history: string;
     symptoms: string;
     habits: string;
+    phone?: string;
+    email?: string;
     password?: string;
 }
 

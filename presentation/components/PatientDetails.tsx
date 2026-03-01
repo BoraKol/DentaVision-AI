@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Image as ImageIcon, FileText, Activity, Pill, Check, Clock, Wallet, Lock, Edit2, Save, X } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, Image as ImageIcon, FileText, Activity, Pill, Check, Clock, Wallet, Lock, Edit2, Save, X, MessageSquare } from 'lucide-react';
 import PhotoGallery from './PhotoGallery';
 import { useLanguage } from '../context/LanguageContext';
 import { useTreatment } from '../context/TreatmentContext';
@@ -12,23 +13,20 @@ import PrescriptionList from './PrescriptionList';
 import PatientFinancials from './PatientFinancials';
 import PatientCommunicationLogs from './PatientCommunicationLogs';
 import PatientWhatsAppChat from './PatientWhatsAppChat';
-import { MessageSquare } from 'lucide-react';
 
-interface PatientDetailsProps {
-    patient: any;
-    onBack: () => void;
-}
+const PatientDetails: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { getPatientById, updatePatient } = usePatient();
+    const patient = id ? getPatientById(id) : null;
 
-const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
     const [activeTab, setActiveTab] = useState<'info' | 'photos' | 'treatment' | 'recipes' | 'financial' | 'communication' | 'security'>('treatment');
     const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState(patient);
+    const [editForm, setEditForm] = useState<any>(patient);
 
     const { t } = useLanguage();
-    const { items, loading, fetchTreatments, updateItemStatus } = useTreatment();
-    const { updatePatient } = usePatient();
+    const { items, loading: treatmentLoading, fetchTreatments, updateItemStatus } = useTreatment();
     const { addToast } = useToast();
-    const patientId = patient.id || patient._id;
 
     useEffect(() => {
         if (patient) {
@@ -37,10 +35,28 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
     }, [patient]);
 
     useEffect(() => {
-        if (activeTab === 'treatment' && patientId) {
-            fetchTreatments(patientId);
+        if (activeTab === 'treatment' && id) {
+            fetchTreatments(id);
         }
-    }, [activeTab, patientId, fetchTreatments]);
+    }, [activeTab, id, fetchTreatments]);
+
+    if (!patient) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl shadow-sm border border-slate-100">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                    <User className="w-8 h-8 text-slate-400" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-800 mb-2">Hasta Bulunamadı</h2>
+                <p className="text-slate-500 mb-6">Aradığınız hasta kaydı bulunamadı veya silinmiş olabilir.</p>
+                <button
+                    onClick={() => navigate('/patients')}
+                    className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                >
+                    Hasta Listesine Dön
+                </button>
+            </div>
+        );
+    }
 
     const tabs = [
         { id: 'info', label: t('app.generalInfo'), icon: User },
@@ -58,7 +74,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
             <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={onBack}
+                        onClick={() => navigate(-1)}
                         className="p-2 -ml-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"
                     >
                         <ArrowLeft className="w-6 h-6" />
@@ -124,7 +140,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                                         <button
                                             onClick={async () => {
                                                 try {
-                                                    await updatePatient(patientId, editForm);
+                                                    await updatePatient(id!, editForm);
                                                     addToast('Hasta bilgileri güncellendi.', 'success');
                                                     setIsEditing(false);
                                                 } catch (e) {
@@ -254,7 +270,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
 
                     {activeTab === 'photos' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <PhotoGallery patientId={patientId} />
+                            <PhotoGallery patientId={id!} />
                         </div>
                     )}
 
@@ -269,7 +285,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                                 </div>
                             </div>
 
-                            {loading ? (
+                            {treatmentLoading ? (
                                 <div className="flex justify-center py-20">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
                                 </div>
@@ -337,7 +353,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                     {activeTab === 'recipes' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                             <PrescriptionProvider>
-                                <PrescriptionList patientId={patientId} />
+                                <PrescriptionList patientId={id!} />
                             </PrescriptionProvider>
                         </div>
                     )}
@@ -345,15 +361,15 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                     {activeTab === 'financial' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                             <FinancialProvider>
-                                <PatientFinancials patientId={patientId} />
+                                <PatientFinancials patientId={id!} />
                             </FinancialProvider>
                         </div>
                     )}
 
                     {activeTab === 'communication' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
-                            <PatientWhatsAppChat patientId={patientId} />
-                            <PatientCommunicationLogs patientId={patientId} />
+                            <PatientWhatsAppChat patientId={id!} />
+                            <PatientCommunicationLogs patientId={id!} />
                         </div>
                     )}
 
@@ -366,7 +382,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patient, onBack }) => {
                             <p className="text-sm text-slate-500 mb-6">
                                 {t('patient.credentialsHint')}
                             </p>
-                            <PatientPasswordUpdate patientId={patientId} />
+                            <PatientPasswordUpdate patientId={id!} />
                         </div>
                     )}
                 </div>

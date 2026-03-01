@@ -1,27 +1,28 @@
-const path = require('path');
-const CommunicationLog = require('../models/CommunicationLog');
+const communicationLogRepository = require('../repositories/CommunicationLogRepository');
 const EmailStrategy = require('./notification/EmailStrategy');
 const SmsStrategy = require('./notification/SmsStrategy');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const WhatsAppStrategy = require('./notification/WhatsAppStrategy');
 
 class NotificationService {
     constructor() {
         this.strategies = {
             email: new EmailStrategy(),
-            sms: new SmsStrategy()
+            sms: new SmsStrategy(),
+            whatsapp: new WhatsAppStrategy()
         };
     }
 
     async logCommunication(patientId, type, recipient, message, status, title = '') {
         try {
-            await CommunicationLog.create({
+            await communicationLogRepository.create({
                 patientId,
                 type,
                 recipient,
                 title,
                 message,
                 status,
-                provider: process.env.SMS_PROVIDER || 'System'
+                provider: process.env.SMS_PROVIDER || 'System',
+                sentAt: Date.now()
             });
         } catch (error) {
             console.error('Failed to log communication:', error);
@@ -47,6 +48,15 @@ class NotificationService {
         return result;
     }
 
+    async sendWhatsApp(patientId, phoneNumber, message) {
+        const result = await this.strategies.whatsapp.send(phoneNumber, message, { patientId });
+        
+        // WhatsApp logging is partially handled inside whatsappService, 
+        // but for consistency we can log here or ensure whatsappService uses Repository too.
+        // (We already updated whatsappService to use Repository)
+        return result;
+    }
+
     // Template for appointment reminder
     async sendAppointmentReminder(patient, appointment) {
         const date = new Date(appointment.date).toLocaleDateString('tr-TR');
@@ -57,9 +67,12 @@ class NotificationService {
         if (patient.phone) {
             const smsMessage = `Sayın ${patient.name}, ${date} saat ${time}'da DentaVision randevunuz vardır.`;
             await this.sendSMS(patient._id, patient.phone, smsMessage);
+            
+            // 2. Also send WhatsApp as preferred high-priority channel
+            await this.sendWhatsApp(patient._id, patient.phone, smsMessage);
         }
 
-        // 2. Send Email
+        // 3. Send Email
         if (patient.email) {
             const subject = `Randevu Hatırlatması - ${date}`;
             const html = `
@@ -83,4 +96,5 @@ class NotificationService {
 }
 
 module.exports = new NotificationService();
+
 

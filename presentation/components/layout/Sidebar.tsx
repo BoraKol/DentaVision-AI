@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
     LayoutDashboard,
     UserPlus,
@@ -21,84 +21,38 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import BranchSwitcher from './BranchSwitcher';
 
-export enum View {
-    DASHBOARD = 'DASHBOARD',
-    PATIENTS = 'PATIENTS',
-    PATIENT_DETAILS = 'PATIENT_DETAILS',
-    CALENDAR = 'CALENDAR',
-    INTAKE = 'INTAKE',
-    IMAGING = 'IMAGING',
-    TREATMENT = 'TREATMENT',
-    SETTINGS = 'SETTINGS',
-    FINANCIALS = 'FINANCIALS',
-    INVENTORY = 'INVENTORY',
-    LAB_TRACKING = 'LAB_TRACKING',
-    TASKS = 'TASKS'
-}
-
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
     isCollapsed: boolean;
 }
 
-
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed }) => {
     const { user } = useUser();
     const { t, language } = useLanguage();
     const { logout } = useAuth();
-    const location = useLocation();
 
-    const iconColors: Record<string, string> = {
-        [View.DASHBOARD]: 'text-blue-600',
-        [View.PATIENTS]: 'text-teal-600',
-        [View.PATIENT_DETAILS]: 'text-teal-600',
-        [View.CALENDAR]: 'text-violet-600',
-        [View.INTAKE]: 'text-emerald-600',
-        [View.IMAGING]: 'text-indigo-600',
-        [View.TREATMENT]: 'text-rose-600',
-        [View.FINANCIALS]: 'text-amber-600',
-        [View.INVENTORY]: 'text-cyan-600',
-        [View.LAB_TRACKING]: 'text-fuchsia-600',
-        [View.TASKS]: 'text-orange-600',
-        [View.SETTINGS]: 'text-slate-600',
-    };
-
-    const viewPaths: Record<string, string> = {
-        [View.DASHBOARD]: '/',
-        [View.PATIENTS]: '/patients',
-        [View.CALENDAR]: '/calendar',
-        [View.INTAKE]: '/intake',
-        [View.IMAGING]: '/imaging',
-        [View.TREATMENT]: '/treatment',
-        [View.FINANCIALS]: '/financials',
-        [View.INVENTORY]: '/inventory',
-        [View.LAB_TRACKING]: '/lab-tracking',
-        [View.TASKS]: '/tasks',
-        [View.SETTINGS]: '/settings',
-    };
-
-    const NavItem = ({ view, icon: Icon, label }: { view: View; icon: React.ElementType; label: string }) => {
-        const path = viewPaths[view] || '/';
-        const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
-        const iconColor = iconColors[view] || 'text-slate-600';
-
+    const NavItem = ({ to, icon: Icon, label, colorClass }: { to: string; icon: React.ElementType; label: string; colorClass: string }) => {
         return (
-            <Link
-                to={path}
+            <NavLink
+                to={to}
                 onClick={onClose}
-                className={`group flex items-center ${isCollapsed ? 'justify-center w-12 h-12 mx-auto' : 'w-full px-4'} py-3 mb-1 text-sm font-medium transition-all rounded-xl duration-200 ${isActive
-                    ? 'bg-slate-100 text-slate-900'
+                className={({ isActive }) => `group flex items-center ${isCollapsed ? 'justify-center w-12 h-12 mx-auto' : 'w-full px-4'} py-3 mb-1 text-sm font-medium transition-all rounded-xl duration-200 ${isActive
+                    ? 'bg-slate-100 text-slate-900 shadow-sm'
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                     }`}
                 title={isCollapsed ? label : undefined}
             >
-                <div className={`p-1.5 rounded-lg ${isCollapsed ? '' : 'mr-3'} transition-colors ${isActive ? 'bg-white shadow-sm' : 'bg-transparent group-hover:bg-white group-hover:shadow-sm'
-                    }`}>
-                    <Icon className={`w-5 h-5 ${isActive ? iconColor : 'text-slate-400 group-hover:' + iconColor}`} />
-                </div>
-                {!isCollapsed && <span className="whitespace-nowrap">{label}</span>}
-            </Link>
+                {({ isActive }) => (
+                    <>
+                        <div className={`p-1.5 rounded-lg ${isCollapsed ? '' : 'mr-3'} transition-colors ${isActive ? 'bg-white shadow-sm' : 'bg-transparent group-hover:bg-white group-hover:shadow-sm'
+                            }`}>
+                            <Icon className={`w-5 h-5 ${isActive ? colorClass : 'text-slate-400 group-hover:' + colorClass}`} />
+                        </div>
+                        {!isCollapsed && <span className="whitespace-nowrap">{label}</span>}
+                    </>
+                )}
+            </NavLink>
         );
     };
 
@@ -135,31 +89,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed }) => {
                         {t('app.general')}
                     </div>
                 ) : <div className="h-6"></div>}
-                <NavItem view={View.DASHBOARD} icon={LayoutDashboard} label={t('app.dashboard')} />
-                <NavItem view={View.PATIENTS} icon={Users} label={t('app.patients')} />
-                <NavItem view={View.CALENDAR} icon={CalendarDays} label={t('app.calendar')} />
+                <NavItem to="/dashboard" icon={LayoutDashboard} label={t('app.dashboard')} colorClass="text-blue-600" />
+                <NavItem to="/patients" icon={Users} label={t('app.patients')} colorClass="text-teal-600" />
+                <NavItem to="/calendar" icon={CalendarDays} label={t('app.calendar')} colorClass="text-violet-600" />
 
                 {!isCollapsed ? (
                     <div className="mt-6 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         {t('app.clinical')}
                     </div>
                 ) : <div className="mt-6 border-t border-slate-100 mb-2"></div>}
-                <NavItem view={View.INTAKE} icon={UserPlus} label={t('app.intake')} />
-                <NavItem view={View.IMAGING} icon={ScanLine} label={t('app.imaging')} />
-                <NavItem view={View.TREATMENT} icon={FileText} label={t('app.treatment')} />
-                <NavItem view={View.LAB_TRACKING} icon={FlaskConical} label={t('app.labTracking')} />
+                <NavItem to="/intake" icon={UserPlus} label={t('app.intake')} colorClass="text-emerald-600" />
+                <NavItem to="/imaging" icon={ScanLine} label={t('app.imaging')} colorClass="text-indigo-600" />
+                <NavItem to="/treatment" icon={FileText} label={t('app.treatment')} colorClass="text-rose-600" />
+                <NavItem to="/lab-tracking" icon={FlaskConical} label={t('app.labTracking')} colorClass="text-fuchsia-600" />
 
                 {!isCollapsed ? (
                     <div className="mt-6 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         {t('app.management')}
                     </div>
                 ) : <div className="mt-6 border-t border-slate-100 mb-2"></div>}
-                <NavItem view={View.FINANCIALS} icon={PieChart} label={t('app.financial')} />
-                <NavItem view={View.INVENTORY} icon={Package} label={t('app.inventory')} />
+                <NavItem to="/financials" icon={PieChart} label={t('app.financial')} colorClass="text-amber-600" />
+                <NavItem to="/inventory" icon={Package} label={t('app.inventory')} colorClass="text-cyan-600" />
 
                 <div className="pt-4 mt-4 border-t border-slate-100">
-                    <NavItem view={View.TASKS} icon={ListTodo} label={t('app.tasks')} />
-                    <NavItem view={View.SETTINGS} icon={Settings} label={t('app.settings')} />
+                    <NavItem to="/tasks" icon={ListTodo} label={t('app.tasks')} colorClass="text-orange-600" />
+                    <NavItem to="/settings" icon={Settings} label={t('app.settings')} colorClass="text-slate-600" />
                 </div>
             </nav>
 

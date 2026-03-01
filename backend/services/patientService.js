@@ -1,4 +1,5 @@
 const patientRepository = require('../repositories/PatientRepository');
+const communicationLogRepository = require('../repositories/CommunicationLogRepository');
 
 class PatientService {
     async getAllPatients(clinicName, skip = 0, limit = 0) {
@@ -35,6 +36,11 @@ class PatientService {
     async deletePatient(id, userId) {
         return await patientRepository.delete({ _id: id, userId });
     }
+
+    async getPatientCommunicationLogs(patientId) {
+        return await communicationLogRepository.findByPatientId(patientId);
+    }
 }
 
 module.exports = new PatientService();
+

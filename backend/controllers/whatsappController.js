@@ -1,8 +1,8 @@
 const ErrorResponse = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const whatsappService = require('../services/whatsappService');
-const CommunicationLog = require('../models/CommunicationLog');
-const Patient = require('../models/Patient');
+const communicationLogRepository = require('../repositories/CommunicationLogRepository');
+const patientRepository = require('../repositories/PatientRepository');
 const geminiService = require('../services/geminiService');
 
 /**
@@ -11,24 +11,21 @@ const geminiService = require('../services/geminiService');
  * @access  Public
  */
 exports.receiveWebhook = catchAsync(async (req, res, next) => {
-    // Note: In a real Meta/Twilio integration, payload structure differs. 
-    // We are mocking a generic payload: { patientId, phoneNumber, message }
     const { patientId, phoneNumber, message } = req.body;
 
     if (!phoneNumber || !message) {
         return next(new ErrorResponse('Telefon numarası ve mesaj zorunludur', 400));
     }
 
-    // 1. Find Patient to construct context
+    // 1. Find Patient to construct context (using Repository)
     let patient;
     if (patientId) {
-        patient = await Patient.findById(patientId);
+        patient = await patientRepository.findById(patientId);
     } else {
-        // Try finding by phone if ID not provided
-        patient = await Patient.findOne({ phone: phoneNumber });
+        patient = await patientRepository.findByPhone(phoneNumber);
     }
 
-    // 2. Record Inbound Message
+    // 2. Record Inbound Message (delegated to Service)
     await whatsappService.recordInboundMessage(
         patient ? patient._id : null,
         phoneNumber,
@@ -40,7 +37,7 @@ exports.receiveWebhook = catchAsync(async (req, res, next) => {
         console.log(`[WA BOT] Analyzing message from ${patient.name}...`);
         const aiReply = await geminiService.analyzePatientMessage(message, patient);
         
-        // 4. Send Auto-Reply
+        // 4. Send Auto-Reply (delegated to Service)
         await whatsappService.sendMessage(patient._id, phoneNumber, aiReply);
     }
 
@@ -55,7 +52,7 @@ exports.receiveWebhook = catchAsync(async (req, res, next) => {
 exports.sendMessage = catchAsync(async (req, res, next) => {
     const { patientId, message } = req.body;
 
-    const patient = await Patient.findById(patientId);
+    const patient = await patientRepository.findById(patientId);
     if (!patient) {
         return next(new ErrorResponse('Hasta bulunamadı', 404));
     }
@@ -79,10 +76,7 @@ exports.sendMessage = catchAsync(async (req, res, next) => {
  * @access  Private 
  */
 exports.getChatHistory = catchAsync(async (req, res, next) => {
-    const logs = await CommunicationLog.find({ 
-        patientId: req.params.patientId,
-        type: 'WHATSAPP'
-    }).sort({ sentAt: 1 }); // Oldest to newest for chat UI
+    const logs = await communicationLogRepository.findByType(req.params.patientId, 'WHATSAPP');
 
     res.status(200).json({
         success: true,
@@ -90,3 +84,4 @@ exports.getChatHistory = catchAsync(async (req, res, next) => {
         data: logs
     });
 });
+
