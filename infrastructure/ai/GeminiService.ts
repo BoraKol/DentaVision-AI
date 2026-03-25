@@ -5,6 +5,13 @@ import { AnalysisResult, ImageAnalysisResult } from "../../core/domain/entities/
 import { AppConfig } from "../config/AppConfig";
 import { APP_CONSTANTS } from "../../core/constants";
 
+/** DRY: Shared generation config used across all non-chat Gemini calls */
+const DEFAULT_GENERATION_CONFIG = {
+    temperature: 0,
+    topP: 0.1,
+    topK: 1
+};
+
 export class GeminiService implements IAIAnalysisService {
     private client: GoogleGenAI;
 
@@ -14,6 +21,21 @@ export class GeminiService implements IAIAnalysisService {
             throw new Error("Gemini API Key is required");
         }
         this.client = new GoogleGenAI({ apiKey });
+    }
+
+    /**
+     * DRY: Centralized Gemini error handler for API key & quota issues.
+     * Returns true if the error was a known recoverable error (caller should use fallback).
+     */
+    private handleGeminiError(error: any, context: string): boolean {
+        console.error(`${context}:`, error);
+
+        if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
+            console.warn("\u26A0\uFE0F Invalid API Key detected. Clearing local override.");
+            localStorage.removeItem('denta_vision_gemini_key');
+        }
+
+        return error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED' || error?.status === 429;
     }
 
     async analyzePatientRisk(patient: Patient, language: string = 'tr'): Promise<AnalysisResult> {
@@ -52,9 +74,7 @@ export class GeminiService implements IAIAnalysisService {
                 model: APP_CONSTANTS.MODELS.TEXT,
                 contents: prompt,
                 config: {
-                    temperature: 0,
-                    topP: 0.1,
-                    topK: 1,
+                    ...DEFAULT_GENERATION_CONFIG,
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.OBJECT,
@@ -90,12 +110,7 @@ export class GeminiService implements IAIAnalysisService {
 
             return JSON.parse(response.text || "{}");
         } catch (error: any) {
-            console.error("Gemini Analysis Error:", error);
-
-            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
-                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
-                localStorage.removeItem('denta_vision_gemini_key');
-            }
+            this.handleGeminiError(error, 'Gemini Analysis Error');
             throw error;
         }
     }
@@ -156,9 +171,7 @@ export class GeminiService implements IAIAnalysisService {
                             icd_10_codes: { type: Type.ARRAY, items: { type: Type.STRING } }
                         }
                     },
-                    temperature: 0,
-                    topP: 0.1,
-                    topK: 1
+                    ...DEFAULT_GENERATION_CONFIG
                 }
             });
 
@@ -168,21 +181,15 @@ export class GeminiService implements IAIAnalysisService {
 
             return JSON.parse(responseText);
         } catch (error: any) {
-            console.error("Gemini Vision Error:", error);
+            const isQuotaError = this.handleGeminiError(error, 'Gemini Vision Error');
 
-            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
-                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
-                localStorage.removeItem('denta_vision_gemini_key');
-            }
-
-            if (error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED' || error?.status === 429) {
-                console.warn("Gemini API quota exceeded. Returning fallback diagnostic to prevent UI freeze.");
+            if (isQuotaError) {
                 return {
-                    primary_diagnosis: "API Limit Aşımı",
-                    interpretation: "Google API kotaları doldu (1 Dakikada maks 15 istek). Lütfen 1 dakika bekleyip işlemi tekrarlayınız.",
+                    primary_diagnosis: "API Limit A\u015F\u0131m\u0131",
+                    interpretation: "Google API kotalar\u0131 doldu (1 Dakikada maks 15 istek). L\u00FCtfen 1 dakika bekleyip i\u015Flemi tekrarlay\u0131n\u0131z.",
                     findings: [],
                     urgency: 1,
-                    recommendations: ["Lütfen 1 dakika bekleyip işlemi tekrarlayınız."],
+                    recommendations: ["L\u00FCtfen 1 dakika bekleyip i\u015Flemi tekrarlay\u0131n\u0131z."],
                     icd_10_codes: ["Z71.9"]
                 };
             }
@@ -227,25 +234,16 @@ export class GeminiService implements IAIAnalysisService {
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
-                    temperature: 0,
-                    topP: 0.1,
-                    topK: 1
+                    ...DEFAULT_GENERATION_CONFIG
                 }
             });
             return JSON.parse(response.text || "{}");
         } catch (error: any) {
-            console.error("Briefing Error:", error);
+            const isQuotaError = this.handleGeminiError(error, 'Briefing Error');
 
-            // Self-Healing: If API key is invalid/expired, clear local storage to fallback to env var
-            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
-                console.warn("⚠️ Invalid API Key detected. Clearing local override to use environment variable.");
-                localStorage.removeItem('denta_vision_gemini_key');
-            }
-
-            if (error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED') {
-                console.warn("Gemini API limit reached, returning fallback briefing");
+            if (isQuotaError) {
                 return {
-                    summary: "AI Brifing limiti aşıldı. Randevu listenizi kontrol ediniz.",
+                    summary: "AI Brifing limiti a\u015F\u0131ld\u0131. Randevu listenizi kontrol ediniz.",
                     patients: appointments.map(apt => ({
                         name: apt.patientName,
                         time: apt.time,
@@ -257,7 +255,7 @@ export class GeminiService implements IAIAnalysisService {
             }
 
             return {
-                summary: "Brifing şu an hazırlanamıyor. Lütfen daha sonra tekrar deneyin.",
+                summary: "Brifing \u015Fu an haz\u0131rlanam\u0131yor. L\u00FCtfen daha sonra tekrar deneyin.",
                 patients: []
             };
         }
@@ -284,20 +282,13 @@ export class GeminiService implements IAIAnalysisService {
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
-                    temperature: 0,
-                    topP: 0.1,
-                    topK: 1
+                    ...DEFAULT_GENERATION_CONFIG
                 }
             });
             return JSON.parse(response.text || "{}");
         } catch (error: any) {
-            console.error("AI Prescription Suggestion Error:", error);
-
-            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
-                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
-                localStorage.removeItem('denta_vision_gemini_key');
-            }
-            return { drugs: [], notes: "Öneri şu an oluşturulamadı." };
+            this.handleGeminiError(error, 'AI Prescription Suggestion Error');
+            return { drugs: [], notes: "\u00D6neri \u015Fu an olu\u015Fturulamad\u0131." };
         }
     }
 
@@ -364,23 +355,15 @@ export class GeminiService implements IAIAnalysisService {
                         },
                         required: ["treatment_items", "summary"]
                     },
-                    temperature: 0,
-                    topP: 0.1,
-                    topK: 1
+                    ...DEFAULT_GENERATION_CONFIG
                 }
             });
             return JSON.parse(response.text || "{}");
         } catch (error: any) {
-            console.error("AI Treatment Plan Generation Error:", error);
-
-            if (error?.message?.includes('API key expired') || error?.message?.includes('API_KEY_INVALID')) {
-                console.warn("⚠️ Invalid API Key detected. Clearing local override.");
-                localStorage.removeItem('denta_vision_gemini_key');
-            }
-
+            this.handleGeminiError(error, 'AI Treatment Plan Generation Error');
             return {
                 treatment_items: [],
-                summary: "Tedavi planı oluşturulamadı. Lütfen manuel giriş yapın."
+                summary: "Tedavi plan\u0131 olu\u015Fturulamad\u0131. L\u00FCtfen manuel giri\u015F yap\u0131n."
             };
         }
     }

@@ -185,11 +185,11 @@ router.post('/book-appointment', protectPatient, async (req, res) => {
 const sendTokenResponse = (patient, statusCode, res) => {
     // Create token
     const token = jwt.sign({ id: patient._id, role: 'patient' }, process.env.JWT_SECRET, {
-        expiresIn: '30d'
+        expiresIn: '7d'
     });
 
     const options = {
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         httpOnly: true
     };
 

@@ -31,8 +31,8 @@ const app = express();
 const morgan = require('morgan');
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 
-// Body parser
-app.use(express.json());
+// Body parser with size limit (Security: prevent large payload DDoS)
+app.use(express.json({ limit: '1mb' }));
 
 // Security Middleware
 const helmet = require('helmet');
@@ -41,27 +41,22 @@ const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const xss = require('xss-clean');
 
-// Enable CORS
+// Enable CORS with environment-based whitelist
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',').map(s => s.trim());
+
 app.use(cors({
     origin: function (origin, callback) {
-        return callback(null, true);
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('CORS policy: Origin not allowed'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-branch', 'x-clinic']
 }));
-
-// Manual CORS Preflight fix for custom headers
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-branch, x-clinic, X-Requested-With, Accept, Origin');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
 
 // Set security headers
 app.use(helmet({
