@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, User, Calendar, Trash2, Edit2, FileText, X, Lock } from 'lucide-react';
+import { Search, Plus, User, Trash2, Edit2, FileText, X, Lock, ChevronDown } from 'lucide-react';
 import { usePatient } from '../context/PatientContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -140,120 +140,141 @@ const PatientModal: React.FC<PatientModalProps> = React.memo(({ isOpen, onClose,
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                                {labels.name} <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                                placeholder={labels.name}
-                            />
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Section 1: Personal Information */}
+                    <div className="rounded-xl border border-slate-200 overflow-hidden">
+                        <div className="px-4 py-2.5 bg-gradient-to-r from-teal-50 to-emerald-50 border-b border-slate-200">
+                            <h4 className="text-xs font-bold text-teal-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <User className="w-3.5 h-3.5" />
+                                {language === 'tr' ? 'Kişisel Bilgiler' : 'Personal Information'}
+                            </h4>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{labels.age}</label>
-                            <input
-                                type="number"
-                                value={formData.age}
-                                onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{labels.gender}</label>
-                            <select
-                                value={formData.gender}
-                                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                            >
-                                <option value="male">{labels.male}</option>
-                                <option value="female">{labels.female}</option>
-
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{labels.phone}</label>
-                            <input
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                placeholder="+90 5XX XXX XX XX"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{labels.email}</label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                placeholder="email@domain.com"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center">
-                                <Lock className="w-3 h-3 mr-1 text-slate-400" />
-                                {labels.password}
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                placeholder={labels.passwordPlaceholder}
-                            />
+                        <div className="p-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {labels.name} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                    placeholder={labels.name}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{labels.age}</label>
+                                    <input
+                                        type="number"
+                                        value={formData.age}
+                                        onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{labels.gender}</label>
+                                    <select
+                                        value={formData.gender}
+                                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    >
+                                        <option value="male">{labels.male}</option>
+                                        <option value="female">{labels.female}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{labels.phone}</label>
+                                    <input
+                                        type="tel"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        placeholder="+90 5XX XXX XX XX"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{labels.email}</label>
+                                    <input
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                        placeholder="email@domain.com"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center">
+                                    <Lock className="w-3 h-3 mr-1 text-slate-400" />
+                                    {labels.password}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    placeholder={labels.passwordPlaceholder}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{labels.history}</label>
-                        <textarea
-                            value={formData.history}
-                            onChange={(e) => setFormData({ ...formData, history: e.target.value })}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                            placeholder={labels.historyPlaceholder}
-                        />
+                    {/* Section 2: Clinical Information */}
+                    <div className="rounded-xl border border-slate-200 overflow-hidden">
+                        <div className="px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-slate-200">
+                            <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5" />
+                                {language === 'tr' ? 'Klinik Bilgiler' : 'Clinical Information'}
+                            </h4>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{labels.history}</label>
+                                <textarea
+                                    value={formData.history}
+                                    onChange={(e) => setFormData({ ...formData, history: e.target.value })}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    placeholder={labels.historyPlaceholder}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{labels.symptoms}</label>
+                                <textarea
+                                    value={formData.symptoms}
+                                    onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    placeholder={labels.symptomsPlaceholder}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{labels.habits}</label>
+                                <textarea
+                                    value={formData.habits}
+                                    onChange={(e) => setFormData({ ...formData, habits: e.target.value })}
+                                    rows={2}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                    placeholder={labels.habitsPlaceholder}
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{labels.symptoms}</label>
-                        <textarea
-                            value={formData.symptoms}
-                            onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                            placeholder={labels.symptomsPlaceholder}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{labels.habits}</label>
-                        <textarea
-                            value={formData.habits}
-                            onChange={(e) => setFormData({ ...formData, habits: e.target.value })}
-                            rows={2}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                            placeholder={labels.habitsPlaceholder}
-                        />
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4">
+                    <div className="flex justify-end space-x-3 pt-2">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg"
+                            className="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
                         >
                             {labels.cancel}
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 shadow-sm"
+                            className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm shadow-teal-200"
                         >
                             {editingPatient ? labels.update : labels.save}
                         </button>
@@ -286,9 +307,9 @@ const PatientListItem = React.memo<{
     const { patient, isSelected, isExpanded, onSelectToggle, onExpandToggle, onEdit, onDelete, getGenderLabel, labels, language, t } = props;
     return (
         <div
-            className={`bg-white rounded-xl border-2 transition-all ${isSelected
-                ? 'border-teal-500 shadow-md'
-                : 'border-slate-200 hover:border-slate-300'
+            className={`bg-white rounded-xl border-2 transition-all duration-200 ${isSelected
+                ? 'border-teal-500 shadow-md shadow-teal-500/10'
+                : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
                 }`}
         >
             <div className="p-4">
@@ -323,64 +344,94 @@ const PatientListItem = React.memo<{
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <button
-                            onClick={onExpandToggle}
-                            className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg"
-                            title={t('common.details') || labels.details}
-                        >
-                            <FileText className="w-4 h-4" />
-                        </button>
+                    <div className="flex items-center space-x-1">
                         <button
                             onClick={onEdit}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title={labels.edit}
                         >
                             <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                             onClick={onDelete}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title={labels.delete}
                         >
                             <Trash2 className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={onExpandToggle}
+                            className={`p-2 rounded-lg transition-all duration-200 ${isExpanded ? 'text-teal-600 bg-teal-50' : 'text-slate-400 hover:text-teal-600 hover:bg-teal-50'}`}
+                            title={t('common.details') || labels.details}
+                        >
+                            <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                         </button>
                     </div>
                 </div>
 
                 {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
-                        {patient.history && (
-                            <div>
-                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.history}</span>
-                                <p className="text-sm text-slate-700">{patient.history}</p>
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+                        {/* Patient Info Grid */}
+                        {(patient.history || patient.symptoms || patient.habits) && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {patient.history && (
+                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">{labels.history}</span>
+                                        <p className="text-sm text-slate-700 mt-1 leading-relaxed">{patient.history}</p>
+                                    </div>
+                                )}
+                                {patient.symptoms && (
+                                    <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">{labels.symptoms}</span>
+                                        <p className="text-sm text-slate-700 mt-1 leading-relaxed">{patient.symptoms}</p>
+                                    </div>
+                                )}
+                                {patient.habits && (
+                                    <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                                        <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">
+                                            {language === 'tr' ? 'Alışkanlıklar' : 'Habits'}
+                                        </span>
+                                        <p className="text-sm text-slate-700 mt-1 leading-relaxed">{patient.habits}</p>
+                                    </div>
+                                )}
                             </div>
                         )}
-                        {patient.symptoms && (
-                            <div>
-                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.symptoms}</span>
-                                <p className="text-sm text-slate-700">{patient.symptoms}</p>
-                            </div>
-                        )}
+
+                        {/* Analysis History - Timeline Style */}
                         {patient.analysisHistory && patient.analysisHistory.length > 0 && (
                             <div>
-                                <span className="text-xs font-medium text-slate-500 uppercase">{labels.analysisHistory}</span>
-                                <div className="mt-2 space-y-2">
-                                    {patient.analysisHistory.slice(-3).map((analysis: any) => (
-                                        <div key={analysis.id} className="bg-slate-50 p-3 rounded-lg text-sm">
-                                            <div className="flex items-center text-slate-500 mb-1">
-                                                <Calendar className="w-3 h-3 mr-1" />
-                                                {new Date(analysis.date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{labels.analysisHistory}</span>
+                                <div className="mt-2 space-y-1.5">
+                                    {patient.analysisHistory.slice(-3).map((analysis: any) => {
+                                        const isError = analysis.diagnosis?.includes('Hata') || analysis.diagnosis?.includes('Error') || analysis.diagnosis?.includes('Limit');
+                                        return (
+                                            <div key={analysis.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${isError ? 'bg-red-50 border border-red-100' : 'bg-teal-50 border border-teal-100'}`}>
+                                                <div className={`w-2 h-2 rounded-full shrink-0 ${isError ? 'bg-red-400' : 'bg-teal-500'}`} />
+                                                <span className="text-slate-400 text-xs font-mono whitespace-nowrap">
+                                                    {analysis && analysis.date
+                                                        ? new Date(analysis.date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                        : '—'}
+                                                </span>
+                                                <span className={`font-medium truncate ${isError ? 'text-red-600' : 'text-slate-700'}`}>
+                                                    {analysis.diagnosis}
+                                                </span>
+                                                {isError && (
+                                                    <span className="ml-auto text-[10px] font-bold text-red-400 bg-red-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                                        {language === 'tr' ? 'Hata' : 'Error'}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <p className="text-slate-700">{analysis.diagnosis}</p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
-                        <div className="text-xs text-slate-400">
-                            {labels.registered}: {new Date(patient.createdAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')} •
-                            {labels.lastUpdate}: {new Date(patient.updatedAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
+
+                        {/* Footer timestamps */}
+                        <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
+                            <span>{labels.registered}: {new Date(patient.createdAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            <span>•</span>
+                            <span>{labels.lastUpdate}: {new Date(patient.updatedAt).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         </div>
                     </div>
                 )}
@@ -517,13 +568,14 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient }) => {
                                 patient={patient}
                                 isSelected={isSelected}
                                 isExpanded={isExpanded}
-                                onSelectToggle={() => selectPatient(isSelected ? null : patient.id)}
-                                onExpandToggle={() => {
+                                onSelectToggle={() => {
+                                    selectPatient(isSelected ? null : patient.id);
                                     if (onSelectPatient) {
                                         onSelectPatient(patient);
-                                    } else {
-                                        setExpandedPatient(isExpanded ? null : patient.id);
                                     }
+                                }}
+                                onExpandToggle={() => {
+                                    setExpandedPatient(isExpanded ? null : patient.id);
                                 }}
                                 onEdit={() => handleEdit(patient)}
                                 onDelete={() => handleDeleteClick(patient.id, patient.name)}

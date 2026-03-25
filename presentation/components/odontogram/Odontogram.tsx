@@ -3,6 +3,9 @@ import Tooth from './Tooth';
 import { useTreatment } from '../../context/TreatmentContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { TreatmentItem } from '../../../core/domain/entities/TreatmentPlan';
+import { BackendAnalysisService } from '../../../infrastructure/api/BackendAnalysisService';
+
+const analysisService = new BackendAnalysisService();
 
 interface OdontogramProps {
     patientId: string;
@@ -18,11 +21,26 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId, readOnly = false }) 
     const [selectedSurfaces, setSelectedSurfaces] = useState<string[]>([]);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
-    // Filter treatments for this patient
+    // AI Analysis State
+    const [aiAnalyses, setAiAnalyses] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchAnalyses = async () => {
+            if (!patientId || patientId === 'p-temp') return;
+            try {
+                const results = await analysisService.getPatientAnalyses(patientId);
+                setAiAnalyses(results);
+            } catch (err) {
+                console.error("Failed to fetch analyses for odontogram", err);
+            }
+        };
+        fetchAnalyses();
+    }, [patientId]);
+
+    // Filter treatments and AI findings for this tooth
     const getTreatmentsForTooth = (toothId: string) => {
-        return items
-            .filter((t: TreatmentItem) => t.toothNumber === toothId && t.status !== 'completed' && t.status !== 'pending' ? false : true) // Simplistic filter, adjust as needed
-            // Actually we want all items for this tooth
+        // Standard treatment items mappings
+        const standardTreatments = items
             .filter((t: TreatmentItem) => t.toothNumber === toothId)
             .flatMap((t: TreatmentItem) => {
                 if (t.surfaces && t.surfaces.length > 0) {
@@ -38,6 +56,32 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId, readOnly = false }) 
                     color: t.status === 'completed' ? '#3b82f6' : '#ef4444'
                 }];
             });
+
+        // AI Findings mappings
+        const aiFindings = aiAnalyses.flatMap(analysis =>
+            (analysis.findings || [])
+                .filter((f: any) => f.toothNumber === toothId)
+                .flatMap((f: any) => {
+                    if (f.surfaces && f.surfaces.length > 0) {
+                        return f.surfaces.map((s: string) => ({
+                            surface: s,
+                            status: 'planned' as const,
+                            color: '#fbbf24', // Amber/Orange to indicate AI suggestion
+                            isAi: true,
+                            procedureName: f.condition
+                        }));
+                    }
+                    return [{
+                        surface: 'General',
+                        status: 'planned' as const,
+                        color: '#fbbf24',
+                        isAi: true,
+                        procedureName: f.condition
+                    }];
+                })
+        );
+
+        return [...standardTreatments, ...aiFindings];
     };
 
     const handleSurfaceClick = (toothId: string, surface: string) => {
@@ -56,13 +100,15 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId, readOnly = false }) 
         setIsActionMenuOpen(true);
     };
 
-    const handleAddAction = (procedure: string) => {
+    const handleAddAction = (procedure: string, aiSurfaces?: string[]) => {
         if (!selectedTooth) return;
+
+        const finalSurfaces = aiSurfaces && aiSurfaces.length > 0 ? aiSurfaces : selectedSurfaces;
 
         addItem(patientId, {
             procedureName: procedure,
             toothNumber: selectedTooth,
-            surfaces: selectedSurfaces,
+            surfaces: finalSurfaces,
             // status is handled by backend default
             cost: 100, // Mock cost
             phase: 'restorative'
@@ -167,6 +213,18 @@ const Odontogram: React.FC<OdontogramProps> = ({ patientId, readOnly = false }) 
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                        {/* AI Recommendation Button */}
+                        {aiAnalyses.flatMap(a => a.findings || [])
+                            .filter(f => f.toothNumber === selectedTooth)
+                            .map((f, idx) => (
+                                <ActionButton
+                                    key={`ai-${idx}`}
+                                    label={`✨ ${language === 'tr' ? 'AI Önerisini Uygula' : 'Apply AI'}: ${f.condition}`}
+                                    color="bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200"
+                                    onClick={() => handleAddAction(f.condition, f.surfaces)}
+                                />
+                            ))
+                        }
                         <ActionButton label="Caries (Çürük)" color="bg-red-100 text-red-700 hover:bg-red-200" onClick={() => handleAddAction('Caries Repair')} />
                         <ActionButton label="Filling (Dolgu)" color="bg-blue-100 text-blue-700 hover:bg-blue-200" onClick={() => handleAddAction('Composite Filling')} />
                         <ActionButton label="Extraction (Çekim)" color="bg-slate-200 text-slate-700 hover:bg-slate-300" onClick={() => handleAddAction('Extraction')} />

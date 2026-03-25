@@ -12,6 +12,21 @@ const patientSchema = new mongoose.Schema({
         required: true,
         index: true
     },
+    tcNo: {
+        type: String,
+        trim: true,
+        minlength: 11,
+        maxlength: 11
+    },
+    passportNo: {
+        type: String,
+        trim: true
+    },
+    address: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     name: {
         type: String,
         required: [true, 'Patient name is required'],
@@ -98,5 +113,6 @@ patientSchema.index({ userId: 1, name: 1 });
 patientSchema.index({ name: 'text' }); // Text index for global search
 patientSchema.index({ phone: 1 });
 patientSchema.index({ email: 1 });
+patientSchema.index({ tcNo: 1 });
 
 module.exports = mongoose.model('Patient', patientSchema);

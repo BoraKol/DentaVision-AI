@@ -12,13 +12,14 @@ const errorHandler = require('./middleware/errorHandler');
 const path = require('path'); // Add path module
 const logger = require('./utils/logger'); // Import Winston logger
 
+// Initializations
+const loadRoutes = require('./utils/routeLoader');
+const setupReminders = require('./cron/reminderCron');
+
 // Initialize database
 connectDB();
 
-const loadRoutes = require('./utils/routeLoader');
-
 // Initialize Cron Jobs
-const setupReminders = require('./cron/reminderCron');
 setupReminders();
 
 // Initialize Event Subscribers

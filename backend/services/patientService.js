@@ -7,7 +7,7 @@ class PatientService {
     }
 
     async getPatientById(id, clinicName) {
-        return await patientRepository.findOne({ _id: id, clinicName });
+        return await patientRepository.findOne({ _id: id, clinicName }, 'userId analyses');
     }
 
     async createPatient(data, user) {

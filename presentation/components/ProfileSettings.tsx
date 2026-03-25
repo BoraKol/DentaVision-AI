@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { User, Mail, Building, FileBadge, Save, Camera, Check, LogOut, Key, Eye, EyeOff, X } from 'lucide-react';
 import { ErrorBoundary } from './ErrorBoundary';
 import NotificationSettings from './NotificationSettings';
+import WhatsAppSettings from './WhatsAppSettings';
 
 const ProfileSettingsContent: React.FC = () => {
     const { user, updateUser } = useUser();
@@ -283,6 +284,11 @@ const ProfileSettingsContent: React.FC = () => {
             {/* Notification Settings */}
             <div className="mt-6">
                 <NotificationSettings />
+            </div>
+
+            {/* WhatsApp Integration */}
+            <div className="mt-6">
+                <WhatsAppSettings />
             </div>
 
             {/* Session / Danger Zone */}

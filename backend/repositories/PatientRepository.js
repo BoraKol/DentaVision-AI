@@ -8,7 +8,7 @@ class PatientRepository extends BaseRepository {
 
     // You can add patient-specific queries here if needed
     async findWithUserDetails(clinicName, skip = 0, limit = 0) {
-        return await this.findAll({ clinicName }, 'userId', { createdAt: -1 }, skip, limit);
+        return await this.findAll({ clinicName }, 'userId analyses', { createdAt: -1 }, skip, limit);
     }
 
     async findByPhone(phone, clinicName = null) {

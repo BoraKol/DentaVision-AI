@@ -6,6 +6,45 @@ const patientRepository = require('../repositories/PatientRepository');
 const geminiService = require('../services/geminiService');
 
 /**
+ * @desc    Get WhatsApp connection status & QR code
+ * @route   GET /api/whatsapp/status
+ * @access  Private
+ */
+exports.getStatus = catchAsync(async (req, res, next) => {
+    const status = whatsappService.getStatus();
+    res.status(200).json({ success: true, data: status });
+});
+
+/**
+ * @desc    Initialize WhatsApp connection (generates QR code)
+ * @route   POST /api/whatsapp/connect
+ * @access  Private
+ */
+exports.connect = catchAsync(async (req, res, next) => {
+    whatsappService.connect();
+    
+    // Wait a bit for QR code to generate
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    const status = whatsappService.getStatus();
+    res.status(200).json({ 
+        success: true, 
+        message: 'WhatsApp bağlantısı başlatıldı. QR kodu tarayın.',
+        data: status 
+    });
+});
+
+/**
+ * @desc    Disconnect WhatsApp session
+ * @route   POST /api/whatsapp/disconnect
+ * @access  Private
+ */
+exports.disconnect = catchAsync(async (req, res, next) => {
+    await whatsappService.disconnect();
+    res.status(200).json({ success: true, message: 'WhatsApp bağlantısı kesildi.' });
+});
+
+/**
  * @desc    Receive incoming WhatsApp message (Webhook)
  * @route   POST /api/whatsapp/webhook
  * @access  Public
@@ -17,7 +56,6 @@ exports.receiveWebhook = catchAsync(async (req, res, next) => {
         return next(new ErrorResponse('Telefon numarası ve mesaj zorunludur', 400));
     }
 
-    // 1. Find Patient to construct context (using Repository)
     let patient;
     if (patientId) {
         patient = await patientRepository.findById(patientId);
@@ -25,19 +63,15 @@ exports.receiveWebhook = catchAsync(async (req, res, next) => {
         patient = await patientRepository.findByPhone(phoneNumber);
     }
 
-    // 2. Record Inbound Message (delegated to Service)
     await whatsappService.recordInboundMessage(
         patient ? patient._id : null,
         phoneNumber,
         message
     );
 
-    // 3. Analyze with Gemini and Auto-Reply if patient is known
     if (patient) {
         console.log(`[WA BOT] Analyzing message from ${patient.name}...`);
         const aiReply = await geminiService.analyzePatientMessage(message, patient);
-        
-        // 4. Send Auto-Reply (delegated to Service)
         await whatsappService.sendMessage(patient._id, phoneNumber, aiReply);
     }
 
@@ -64,7 +98,7 @@ exports.sendMessage = catchAsync(async (req, res, next) => {
     const success = await whatsappService.sendMessage(patient._id, patient.phone, message);
 
     if (!success) {
-        return next(new ErrorResponse('Mesaj gönderilemedi', 500));
+        return next(new ErrorResponse('Mesaj gönderilemedi. WhatsApp bağlantısını kontrol edin.', 500));
     }
 
     res.status(200).json({ success: true, message: 'Mesaj gönderildi' });

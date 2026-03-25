@@ -50,6 +50,11 @@ const BranchSwitcher: React.FC<BranchSwitcherProps> = ({ isCollapsed }) => {
         }
     };
 
+    // Hide branch switcher if user has only one branch (no switching needed)
+    if (!user.branches || user.branches.length <= 1) {
+        return null;
+    }
+
     if (isCollapsed) {
         return (
             <div className="relative flex justify-center py-4 group">

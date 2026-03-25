@@ -30,9 +30,16 @@ router.get('/reports/doctor-performance', protect, financialsController.getDocto
 router.get('/reports/payment-methods', protect, financialsController.getPaymentMethodAnalysis);
 
 // @desc    Generate E-Invoice for a specific transaction
-// @route   POST /api/financials/:id/invoice
-// @access  Private
-router.post('/:id/invoice', protect, financialsController.generateInvoice);
+// Route: POST /api/financials/transactions/:id/invoice
+// Desc: Generate e-invoice for a transaction
+router.post('/transactions/:id/invoice', protect, async (req, res, next) => {
+    try {
+        const result = await financialsService.generateInvoice(req.params.id, req.user.clinicName, req.user);
+        res.json({ success: true, data: result });
+    } catch (err) {
+        next(err);
+    }
+});
 
 // @desc    Delete transaction
 // @route   DELETE /api/financials/:id

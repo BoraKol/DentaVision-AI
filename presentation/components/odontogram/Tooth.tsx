@@ -7,6 +7,8 @@ interface ToothProps {
         surface: string; // 'M', 'O', 'D', 'B', 'L', 'Root', 'General'
         status: 'planned' | 'completed' | 'existing';
         color?: string;
+        isAi?: boolean; // AI Recommended finding
+        procedureName?: string;
     }[];
     onSurfaceClick?: (surface: string) => void;
     selectedSurfaces?: string[];
@@ -105,14 +107,24 @@ const Tooth: React.FC<ToothProps> = ({
     // Simplification: Keeping the box map for the "Crown" part because it allows clicking specific surfaces clearly.
     // But we will stylize the outline.
 
+    const aiFinding = treatments.find(t => t.isAi);
+
     return (
         <div className="flex flex-col items-center group relative">
-            <div className="text-xs font-bold text-slate-500 mb-1 absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 bg-white px-1 shadow-sm rounded border border-slate-200">
-                #{id} {type}
+            <div className="text-xs font-bold text-slate-500 mb-1 absolute -top-8 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 bg-white px-2 py-1 shadow-sm rounded border border-slate-200 pointer-events-none flex flex-col items-center">
+                <span>#{id} {type}</span>
+                {aiFinding && (
+                    <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1 rounded mt-0.5">
+                        ✨ AI: {aiFinding.procedureName}
+                    </span>
+                )}
             </div>
 
             {/* Main Tooth ID Label (Always visible) */}
-            <span className={`text-xs font-semibold mb-0.5 ${hasExtraction ? 'text-red-400 line-through' : 'text-slate-600'}`}>{id}</span>
+            <div className="flex flex-col items-center">
+                {aiFinding && <span className="text-[10px] text-amber-500 font-bold -mb-1">✨</span>}
+                <span className={`text-xs font-semibold mb-0.5 ${hasExtraction ? 'text-red-400 line-through' : 'text-slate-600'}`}>{id}</span>
+            </div>
 
             <svg width="46" height="60" viewBox="0 0 100 130" className="cursor-pointer">
                 {/* ROOT SECTION */}

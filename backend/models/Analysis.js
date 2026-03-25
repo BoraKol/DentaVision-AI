@@ -24,10 +24,16 @@ const analysisSchema = new mongoose.Schema({
         required: true
     },
     findings: [{
-        type: String
+        toothNumber: { type: String },
+        surfaces: [{ type: String }],
+        condition: { type: String },
+        confidence: { type: Number }
     }],
     notes: {
         type: String
+    },
+    aiDetails: {
+        type: mongoose.Schema.Types.Mixed
     }
 }, {
     timestamps: true

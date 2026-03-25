@@ -115,7 +115,7 @@ class FinancialsService {
     /**
      * Generate an e-invoice for a specific transaction
      */
-    async generateInvoice(transactionId, clinicName) {
+    async generateInvoice(transactionId, clinicName, user) {
         const transaction = await TransactionRepository.findOne({ _id: transactionId, clinicName });
 
         if (!transaction) throw new ErrorResponse('İşlem bulunamadı', 404);
@@ -129,7 +129,7 @@ class FinancialsService {
 
         try {
             // Wait for 3rd party API simulation
-            const invoiceData = await EInvoiceService.generateInvoice(transaction, patient);
+            const invoiceData = await EInvoiceService.generateInvoice(transaction, patient, user);
 
             // Update local DB
             transaction.invoiceStatus = invoiceData.status;

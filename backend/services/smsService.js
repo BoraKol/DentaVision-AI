@@ -8,7 +8,7 @@ class SmsProvider {
 
 class MockSmsProvider extends SmsProvider {
     async send(to, message) {
-        console.log(`[SMS-MOCK] To: ${to}, Message: ${message}`);
+        console.log(`[SMS-MOCK] To: ${to.replace(/.(?=.{4})/g, '*')}, Message: [MASKED]`);
         return { success: true, messageId: 'mock-id-' + Date.now() };
     }
 }
@@ -43,10 +43,10 @@ class NetgsmSmsProvider extends SmsProvider {
             // Netgsm returns codes starting with 00, 01, 02 for success
             const result = response.data;
             if (result.toString().startsWith('00') || result.toString().startsWith('01') || result.toString().startsWith('02')) {
-                console.log(`[SMS-NETGSM] Sent to ${to}: ${result}`);
+                console.log(`[SMS-NETGSM] Sent to ${to.replace(/.(?=.{4})/g, '*')}: ${result}`);
                 return { success: true, messageId: result };
             } else {
-                console.error(`[SMS-NETGSM] Failed to ${to}: ${result}`);
+                console.error(`[SMS-NETGSM] Failed to ${to.replace(/.(?=.{4})/g, '*')}: ${result}`);
                 return { success: false, error: result };
             }
         } catch (error) {

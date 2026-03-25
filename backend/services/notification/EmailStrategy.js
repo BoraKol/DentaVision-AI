@@ -23,7 +23,7 @@ class EmailStrategy extends BaseStrategy {
             // Check if we are in development/test environment
             if (process.env.NODE_ENV !== 'production') {
                 console.warn('⚠️ SMTP credentials not set. Email simulation:');
-                console.log(`To: ${recipient}, Subject: ${subject}`);
+                console.log(`To: ${recipient.replace(/(.{2})(.*)(?=@)/, '$1***')}, Subject: ${subject}`);
                 return { success: true, simulated: true };
             }
             return { success: false, error: 'SMTP credentials missing' };

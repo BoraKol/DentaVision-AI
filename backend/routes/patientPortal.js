@@ -23,7 +23,7 @@ router.post('/login', async (req, res) => {
     // Example: 5555555555 -> 5\D*5\D*5\D*...
     const fuzzyPhoneRegex = last10Digits.split('').join('\\D*');
     
-    console.log(`Login Attempt: Input Phone: ${phone}, Clean: ${cleanPhone}, Regex: ${fuzzyPhoneRegex}`);
+    console.log(`Login Attempt: Input Phone: ${phone.replace(/.(?=.{4})/g, '*')}, Clean: [MASKED], Regex: [MASKED]`);
 
     // Find patient where phone matches the fuzzy regex (digits appear in order)
     const patient = await Patient.findOne({ 
@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await patient.matchPassword(password);
 
     if (!isMatch) {
-         console.log(`Login Failed: Password mismatch for user ${patient.name}`);
+         console.log(`Login Failed: Password mismatch for Patient ID: ${patient._id}`);
         return res.status(401).json({ success: false, message: 'Invalid credentials (Password mismatch)' });
     }
 

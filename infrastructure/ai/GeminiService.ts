@@ -102,22 +102,24 @@ export class GeminiService implements IAIAnalysisService {
 
     async analyzeRadiograph(base64Image: string): Promise<ImageAnalysisResult> {
         const prompt = `
-      Role: DentaVision AI (Kıdemli Radyoloji Uzmanı).
-      Task: Bu dental radyografiyi klinik hassasiyetle analiz et.
+      Role: DentaVision AI (Senior Dental Radiologist).
+      Task: Analyze this dental radiograph with clinical precision.
       
-      Yönergeler (KESİN UY):
-      1. Sadece radyografik bulguları raporla (bed, chair, tv gibi nesneleri KESİNLİKLE YOKSAY).
-      2. Önce görsel kanıtı (radyolusens, radyoopak alanlar, periodontal aralıklar) tespit et.
-      3. Tespit ettiğin her bulgu için spesifik FDI diş numarası belirt (11-48).
-      4. Bulguları klinik ciddiyetine göre 1-5 arası puanla.
-      5. Analiz sırasında her zaman aynı görsel özellikleri aynı şekilde yorumla.
+      Instructions (STRICTLY FOLLOW):
+      1. Report ONLY radiographic findings (ignore beds, chairs, cables, etc.).
+      2. Identify visual evidence: radiolucency (decay/infection), radiopacity (fillings/restorations), periodontal gaps, impacted teeth.
+      3. For each finding, specify the FDI Tooth Number (11-48).
+      4. Score urgency from 1 (Routine) to 5 (Emergency).
+      5. Provide an empathetic interpretation summary for the patient.
+      6. Return a primary diagnosis summarizing the main issue.
 
-      Çıktı JSON formatı:
-      - findings: ["46 nolu dişte derin distal radyolusite", "18 nolu gömülü diş"]
-      - diagnosis: Toplu klinik sonuç cümlesi.
-      - urgency: 1-5 (Aciliyet).
-      - recommendations: ["46 kanal tedavisi", "18 çekim"]
-      - icd_10_codes: İlgili kodlar.
+      Output JSON fields:
+      - primary_diagnosis: A concise clinical summary of the main finding (e.g., "Deep Caries on #46", "Multiple Restorations").
+      - interpretation: A 1-2 sentence summary for the patient in Turkish.
+      - findings: Array of objects with { toothNumber: string, condition: string, surfaces: string[] }.
+      - urgency: Integer 1-5.
+      - recommendations: Array of suggested treatments in Turkish.
+      - icd_10_codes: Relevant ICD-10 codes.
     `;
 
         try {
@@ -133,9 +135,22 @@ export class GeminiService implements IAIAnalysisService {
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.OBJECT,
+                        required: ["primary_diagnosis", "interpretation", "findings", "urgency", "recommendations", "icd_10_codes"],
                         properties: {
-                            findings: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            diagnosis: { type: Type.STRING },
+                            primary_diagnosis: { type: Type.STRING },
+                            interpretation: { type: Type.STRING },
+                            findings: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    required: ["toothNumber", "condition", "surfaces"],
+                                    properties: {
+                                        toothNumber: { type: Type.STRING },
+                                        condition: { type: Type.STRING },
+                                        surfaces: { type: Type.ARRAY, items: { type: Type.STRING } }
+                                    }
+                                }
+                            },
                             urgency: { type: Type.INTEGER },
                             recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
                             icd_10_codes: { type: Type.ARRAY, items: { type: Type.STRING } }
@@ -147,7 +162,11 @@ export class GeminiService implements IAIAnalysisService {
                 }
             });
 
-            return JSON.parse(response.text || "{}");
+            let responseText = response.text || "{}";
+            // Remove markdown json block if present
+            responseText = responseText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+
+            return JSON.parse(responseText);
         } catch (error: any) {
             console.error("Gemini Vision Error:", error);
 
@@ -155,6 +174,19 @@ export class GeminiService implements IAIAnalysisService {
                 console.warn("⚠️ Invalid API Key detected. Clearing local override.");
                 localStorage.removeItem('denta_vision_gemini_key');
             }
+
+            if (error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED' || error?.status === 429) {
+                console.warn("Gemini API quota exceeded. Returning fallback diagnostic to prevent UI freeze.");
+                return {
+                    primary_diagnosis: "API Limit Aşımı",
+                    interpretation: "Google API kotaları doldu (1 Dakikada maks 15 istek). Lütfen 1 dakika bekleyip işlemi tekrarlayınız.",
+                    findings: [],
+                    urgency: 1,
+                    recommendations: ["Lütfen 1 dakika bekleyip işlemi tekrarlayınız."],
+                    icd_10_codes: ["Z71.9"]
+                };
+            }
+
             throw error;
         }
     }

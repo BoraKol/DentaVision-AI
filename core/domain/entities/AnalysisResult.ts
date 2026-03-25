@@ -22,8 +22,9 @@ export interface AnalysisResult {
 }
 
 export interface ImageAnalysisResult {
-    findings: string[];
-    diagnosis: string;
+    findings: { toothNumber: string; condition: string; surfaces: string[] }[];
+    primary_diagnosis: string;
+    interpretation: string;
     urgency: UrgencyLevel;
     recommendations: string[];
     icd_10_codes: string[];

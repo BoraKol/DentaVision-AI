@@ -20,6 +20,12 @@ backend/.env
 backend/uploads/
 uploads/
 
+# WhatsApp Web JS Auth Sessions & Caches
+.wwebjs_auth/
+.wwebjs_cache/
+**/.wwebjs_auth/
+**/.wwebjs_cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

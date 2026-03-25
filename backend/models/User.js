@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Password is required'],
-        minlength: 6
+        minlength: 6,
+        select: false
     },
     name: {
         type: String,
@@ -64,7 +65,8 @@ const userSchema = new mongoose.Schema({
     },
     geminiApiKey: {
         type: String,
-        default: ''
+        default: '',
+        select: false
     },
     branches: {
         type: [String],

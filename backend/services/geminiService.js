@@ -50,6 +50,100 @@ class GeminiService {
             return "Mesajınız kliniğimize ulaştı. Teşekkür ederiz."; // Fallback
         }
     }
+
+    /**
+     * Analyzes a dental radiograph to find conditions and map them to tooth numbers
+     * @param {string} base64Image - Base64 encoded string of the radiograph
+     * @returns {Array<Object>} - Structured JSON array of findings
+     */
+    async analyzeRadiograph(base64Image) {
+        try {
+            if (!this.apiKey) {
+                console.warn("No Gemini API key. Returning mock radiograph analysis.");
+                // Return mock data for Odontogram testing if no API key
+                return [
+                    { toothNumber: '16', surfaces: ['O'], condition: 'Caries Repair', confidence: 0.92 },
+                    { toothNumber: '24', surfaces: ['M', 'O', 'D'], condition: 'Composite Filling', confidence: 0.88 },
+                    { toothNumber: '46', surfaces: ['General'], condition: 'Root Canal Treatment', confidence: 0.75 }
+                ];
+            }
+
+            const client = new GoogleGenAI({ apiKey: this.apiKey });
+            const prompt = `
+             Role: DentaVision AI (Senior Dental Radiologist).
+             Task: Analyze this dental radiograph with clinical precision.
+             Instructions (STRICTLY FOLLOW):
+             1. Report ONLY radiographic findings (ignore beds, chairs, cables, etc.).
+             2. Identify visual evidence: radiolucency (decay/infection), radiopacity (fillings/restorations).
+             3. For each finding, specify the FDI Tooth Number (11-48).
+             4. Score urgency from 1 (Routine) to 5 (Emergency).
+             5. Provide an empathetic interpretation summary for the patient in Turkish.
+             6. Return a primary diagnosis summarizing the main issue.
+            `;
+
+            const response = await client.models.generateContent({
+                model: "gemini-2.0-flash",
+                contents: [
+                    prompt,
+                    {
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: base64Image
+                        }
+                    }
+                ],
+                config: {
+                    temperature: 0,
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        required: ["primary_diagnosis", "interpretation", "findings", "urgency", "recommendations", "icd_10_codes"],
+                        properties: {
+                            primary_diagnosis: { type: "STRING" },
+                            interpretation: { type: "STRING" },
+                            findings: { 
+                                type: "ARRAY", 
+                                items: { 
+                                    type: "OBJECT",
+                                    required: ["toothNumber", "condition", "surfaces"],
+                                    properties: {
+                                        toothNumber: { type: "STRING" },
+                                        condition: { type: "STRING" },
+                                        surfaces: { type: "ARRAY", items: { type: "STRING" } }
+                                    }
+                                } 
+                            },
+                            urgency: { type: "INTEGER" },
+                            recommendations: { type: "ARRAY", items: { type: "STRING" } },
+                            icd_10_codes: { type: "ARRAY", items: { type: "STRING" } }
+                        }
+                    }
+                }
+            });
+
+            let responseText = response.text || "{}";
+            // Remove markdown json block if present
+            responseText = responseText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+            
+            return JSON.parse(responseText);
+        } catch (error) {
+            console.error("Gemini Radiograph Analysis Error:", error);
+
+            if (error?.message?.includes('429') || error?.status === 'RESOURCE_EXHAUSTED' || error?.status === 429) {
+                console.warn("Gemini API quota exceeded. Returning fallback diagnostic.");
+                return {
+                    primary_diagnosis: "API Limit Aşımı",
+                    interpretation: "API kotaları (1 Dakikada 15 İstek) dolduğu için analiz yapılamadı. Lütfen 1 dakika bekleyip tekrar deneyin.",
+                    findings: [],
+                    urgency: 1,
+                    recommendations: ["Lütfen 1 dakika bekleyip işlemi tekrarlayınız."],
+                    icd_10_codes: ["Z71.9"]
+                };
+            }
+
+            throw new Error("Görüntü analizi sırasında bir hata oluştu.");
+        }
+    }
 }
 
 module.exports = new GeminiService();

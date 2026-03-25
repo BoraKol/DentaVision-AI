@@ -40,7 +40,7 @@ const AppRouter: React.FC = () => {
             {/* Authenticated Dashboard Routes */}
             <Route element={<AuthGuard><RootLayout /></AuthGuard>}>
                 <Route path="/dashboard" element={<Dashboard onViewChange={() => { }} />} />
-                <Route path="/patients" element={<PatientList onSelectPatient={() => { }} />} />
+                <Route path="/patients" element={<PatientList />} />
                 <Route path="/patients/:id" element={<PatientDetails />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/intake" element={<PatientIntake />} />

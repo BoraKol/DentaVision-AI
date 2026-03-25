@@ -1,11 +1,10 @@
 const communicationLogRepository = require('../repositories/CommunicationLogRepository');
-const patientRepository = require('../repositories/PatientRepository');
+const whatsappWebProvider = require('./whatsappWebProvider');
 
 class WhatsAppService {
     constructor() {
-        // Mock provider implementation for local development
-        this.provider = 'MockWhatsApp';
-        console.log(`✅ WhatsApp Service initialized with ${this.provider} provider`);
+        this.provider = whatsappWebProvider;
+        console.log(`✅ WhatsApp Service initialized (whatsapp-web.js provider)`);
     }
 
     /**
@@ -17,26 +16,30 @@ class WhatsAppService {
      */
     async sendMessage(patientId, phoneNumber, message) {
         try {
-            console.log(`[WHATSAPP SENT] To: ${phoneNumber} | Message: ${message}`);
+            const result = await this.provider.sendMessage(phoneNumber, message);
             
             const logData = {
                 type: 'WHATSAPP',
                 direction: 'OUTBOUND',
                 recipient: phoneNumber,
                 message: message,
-                status: 'SENT',
-                provider: this.provider,
+                status: result.success ? 'SENT' : 'FAILED',
+                provider: 'whatsapp-web.js',
+                metadata: result.success ? { messageId: result.messageId } : { error: result.error },
                 sentAt: Date.now()
             };
             if (patientId) logData.patientId = patientId;
             
             await communicationLogRepository.create(logData);
 
-            return true;
+            if (!result.success) {
+                console.warn(`[WhatsApp] Message failed: ${result.error}`);
+            }
+
+            return result.success;
         } catch (error) {
             console.error('WhatsApp send error:', error);
             
-            // Log failed attempt
             await communicationLogRepository.create({
                 patientId,
                 type: 'WHATSAPP',
@@ -44,7 +47,7 @@ class WhatsAppService {
                 recipient: phoneNumber,
                 message: message,
                 status: 'FAILED',
-                provider: this.provider,
+                provider: 'whatsapp-web.js',
                 metadata: { error: error.message },
                 sentAt: Date.now()
             });
@@ -59,22 +62,42 @@ class WhatsAppService {
      * @param {string} message 
      */
     async recordInboundMessage(patientId, phoneNumber, message) {
-        console.log(`[WHATSAPP RECEIVED] From: ${phoneNumber} | Message: ${message}`);
+        console.log(`[WHATSAPP RECEIVED] From: ${phoneNumber.replace(/.(?=.{4})/g, '*')} | Message: [MASKED]`);
         
         const logData = {
             type: 'WHATSAPP',
             direction: 'INBOUND',
             recipient: phoneNumber,
             message: message,
-            status: 'SENT',
-            provider: this.provider,
+            status: 'RECEIVED',
+            provider: 'whatsapp-web.js',
             sentAt: Date.now()
         };
         if (patientId) logData.patientId = patientId;
         
         await communicationLogRepository.create(logData);
     }
+
+    /**
+     * Get the current WhatsApp connection status
+     */
+    getStatus() {
+        return this.provider.getStatus();
+    }
+
+    /**
+     * Initialize WhatsApp connection (triggers QR code generation)
+     */
+    connect() {
+        this.provider.initialize();
+    }
+
+    /**
+     * Disconnect WhatsApp session
+     */
+    async disconnect() {
+        await this.provider.disconnect();
+    }
 }
 
 module.exports = new WhatsAppService();
-

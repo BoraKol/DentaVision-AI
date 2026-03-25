@@ -28,8 +28,10 @@ export const useDashboard = () => {
 
         return execute(async () => {
             const result = await useCase.execute(appointments);
-            // Only cache if it's not the fallback empty structure
-            if (result && result.patients && result.patients.length > 0) {
+
+            // Fix: Cache the result even if patients array is empty (e.g. no appointments today)
+            // This prevents the app from spamming the Gemini API on every mount when there are 0 appointments
+            if (result && result.summary) {
                 localStorage.setItem(CACHE_KEY, JSON.stringify(result));
                 localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
             }

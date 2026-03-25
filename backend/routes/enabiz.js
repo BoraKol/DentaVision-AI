@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const enabizService = require('../services/ENabizService');
-const ENabizLog = require('../models/ENabizLog');
+const eNabizRepository = require('../repositories/ENabizRepository');
 
 // All routes are protected
 router.use(protect);
@@ -37,7 +37,7 @@ router.post('/treatment', async (req, res) => {
 // @access  Private
 router.get('/logs/:patientId', async (req, res) => {
     try {
-        const logs = await ENabizLog.find({ patientId: req.params.patientId }).sort({ submittedAt: -1 });
+        const logs = await eNabizRepository.findByPatientId(req.params.patientId);
         res.status(200).json({ success: true, count: logs.length, data: logs });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

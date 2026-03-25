@@ -65,6 +65,8 @@ export const PatientProvider: React.FC<{ children: ReactNode }> = ({ children })
                 id: p._id, // Map MongoDB _id to frontend id
                 createdAt: new Date(p.createdAt),
                 updatedAt: new Date(p.updatedAt),
+                // Map backend medicalHistory to history if present
+                history: p.medicalHistory || p.history || '',
                 // Assuming analyses are populated or fetched - for now handled simply
                 analysisHistory: p.analyses || [] // This might need adjustment based on backend population
             }));
