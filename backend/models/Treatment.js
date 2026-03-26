@@ -41,6 +41,15 @@ const treatmentSchema = new mongoose.Schema({
     },
     notes: {
         type: String
+    },
+    enabizStatus: {
+        type: String,
+        enum: ['not_sent', 'pending', 'success', 'failed'],
+        default: 'not_sent'
+    },
+    sysTakipNo: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true

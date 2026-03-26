@@ -50,13 +50,16 @@ const InventoryItemSchema = new mongoose.Schema({
         },
         note: String
     }],
-    clinicId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        // required: true // Open for now to avoid breaking existing data if any
+    clinicName: {
+        type: String,
+        required: true,
+        index: true
     }
 }, {
     timestamps: true
 });
+
+InventoryItemSchema.index({ clinicName: 1, name: 1 });
+InventoryItemSchema.index({ category: 1 });
 
 module.exports = mongoose.model('InventoryItem', InventoryItemSchema);

@@ -70,6 +70,18 @@ const PatientDetails: React.FC = () => {
         { id: 'security', label: t('app.security'), icon: Lock },
     ];
 
+    const handleSendToENabiz = async (treatmentId: string) => {
+        try {
+            await api.post(`/enabiz/send/treatment/${treatmentId}`);
+            addToast('Tedavi MSVS formatında E-Nabız (SYKS) sistemine başarıyla iletildi.', 'success');
+            if (id) fetchTreatments(id);
+        } catch (error: any) {
+            console.error('E-Nabız gönderim hatası:', error);
+            addToast(error.response?.data?.error || 'E-Nabız gönderimi başarısız oldu', 'error');
+            if (id) fetchTreatments(id);
+        }
+    };
+
     return (
         <div className="flex flex-col h-full bg-slate-50">
             {/* Header */}
@@ -343,8 +355,34 @@ const PatientDetails: React.FC = () => {
                                                 </div>
                                                 {item.notes && <p className="text-slate-600 text-sm mb-3 italic">"{item.notes}"</p>}
                                                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                                                    <div className="flex gap-2 text-xs font-medium text-slate-400 capitalize">
-                                                        <span>Faz: {item.phase}</span>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="flex gap-2 text-xs font-medium text-slate-400 capitalize">
+                                                            <span>Faz: {item.phase}</span>
+                                                        </div>
+                                                        {item.status === 'completed' && (
+                                                            <div className="flex items-center">
+                                                                {(item as any).enabizStatus === 'success' ? (
+                                                                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-200">
+                                                                        <Check className="w-3 h-3" /> E-Nabız: {(item as any).sysTakipNo || 'Gönderildi'}
+                                                                    </span>
+                                                                ) : (item as any).enabizStatus === 'failed' ? (
+                                                                    <button
+                                                                        onClick={() => handleSendToENabiz(item.id)}
+                                                                        className="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-full flex items-center gap-1 border border-red-200 transition-colors"
+                                                                        title="Tekrar Dene"
+                                                                    >
+                                                                        ⚠️ E-Nabız Hata (Tekrar Dene)
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => handleSendToENabiz(item.id)}
+                                                                        className="text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-full flex items-center gap-1 border border-indigo-200 transition-colors"
+                                                                    >
+                                                                        🏥 E-Nabız'a Gönder
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     {item.cost && (
                                                         <div className="text-slate-800 font-bold">

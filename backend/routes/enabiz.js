@@ -1,47 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
-const enabizService = require('../services/ENabizService');
-const eNabizRepository = require('../repositories/ENabizRepository');
+const enabizController = require('../controllers/enabizController');
+
+console.log('✅ E-Nabız router initialized');
 
 // All routes are protected
 router.use(protect);
 
-// @desc    Send treatment data to E-Nabız
-// @route   POST /api/enabiz/treatment
+// @desc    Send a specific treatment to E-Nabız
+// @route   POST /api/enabiz/send/treatment/:id
 // @access  Private
-router.post('/treatment', async (req, res) => {
-    try {
-        const { patientId, treatmentData } = req.body;
-        
-        if (!patientId || !treatmentData) {
-            return res.status(400).json({ success: false, error: 'Missing patientId or treatmentData' });
-        }
+router.post('/send/treatment/:id', enabizController.sendTreatmentToENabiz);
 
-        const result = await enabizService.sendData(
-            patientId, 
-            'TREATMENT_START', 
-            treatmentData, 
-            req.user._id
-        );
-
-        res.status(200).json({ success: true, data: result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// @desc    Get E-Nabız logs for a patient
-// @route   GET /api/enabiz/logs/:patientId
+// @desc    Get E-Nabız logs
+// @route   GET /api/enabiz/logs
 // @access  Private
-router.get('/logs/:patientId', async (req, res) => {
-    try {
-        const logs = await eNabizRepository.findByPatientId(req.params.patientId);
-        res.status(200).json({ success: true, count: logs.length, data: logs });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
+router.get('/logs', enabizController.getLogs);
 
 module.exports = router;

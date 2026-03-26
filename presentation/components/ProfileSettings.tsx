@@ -200,17 +200,37 @@ const ProfileSettingsContent: React.FC = () => {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{labels.email}</label>
-                        <div className="relative">
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                            />
-                            <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{language === 'tr' ? 'Hakediş / Prim Oranı (%)' : 'Commission Rate (%)'}</label>
+                            <div className="relative flex items-center">
+                                <input
+                                    type="number"
+                                    name="commissionRate"
+                                    min="0"
+                                    max="100"
+                                    value={formData.commissionRate || 0}
+                                    onChange={e => setFormData(prev => ({ ...prev, commissionRate: Number(e.target.value) }))}
+                                    className="w-full pl-3 pr-8 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                />
+                                <span className="absolute right-3 text-slate-400 font-bold">%</span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                {language === 'tr' ? 'Finansal prim hesaplamalarında kullanılacak oran.' : 'Rate used for financial commission calculations.'}
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{labels.email}</label>
+                            <div className="relative">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                />
+                                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                            </div>
                         </div>
                     </div>
                 </div>

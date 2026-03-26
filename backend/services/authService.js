@@ -69,6 +69,7 @@ class AuthService {
         user.specialty = data.specialty || user.specialty;
         user.clinicName = data.clinicName || user.clinicName;
         user.avatar = data.avatar || user.avatar;
+        user.commissionRate = data.commissionRate !== undefined ? data.commissionRate : user.commissionRate;
         
         if (data.preferences) {
             user.preferences = { ...user.preferences, ...data.preferences };

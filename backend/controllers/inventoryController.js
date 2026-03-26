@@ -6,7 +6,7 @@ const AppError = require('../utils/AppError');
 // @route   GET /api/inventory
 // @access  Private
 const getInventoryItems = catchAsync(async (req, res, next) => {
-    const items = await inventoryService.getAllItems();
+    const items = await inventoryService.getAllItems(req.user.clinicName);
     res.status(200).json({
         success: true,
         count: items.length,
@@ -18,7 +18,7 @@ const getInventoryItems = catchAsync(async (req, res, next) => {
 // @route   GET /api/inventory/:id
 // @access  Private
 const getInventoryItem = catchAsync(async (req, res, next) => {
-    const item = await inventoryService.getItemById(req.params.id);
+    const item = await inventoryService.getItemById(req.params.id, req.user.clinicName);
     if (!item) {
         return next(new AppError('Item not found', 404));
     }
@@ -29,7 +29,7 @@ const getInventoryItem = catchAsync(async (req, res, next) => {
 // @route   POST /api/inventory
 // @access  Private
 const createInventoryItem = catchAsync(async (req, res, next) => {
-    const item = await inventoryService.createItem(req.body);
+    const item = await inventoryService.createItem({ ...req.body, clinicName: req.user.clinicName });
     res.status(201).json({ success: true, data: item });
 });
 
@@ -37,7 +37,7 @@ const createInventoryItem = catchAsync(async (req, res, next) => {
 // @route   PUT /api/inventory/:id
 // @access  Private
 const updateInventoryItem = catchAsync(async (req, res, next) => {
-    const item = await inventoryService.updateItem(req.params.id, req.body);
+    const item = await inventoryService.updateItem(req.params.id, req.user.clinicName, req.body);
     
     if (!item) {
         return next(new AppError('Item not found', 404));
@@ -50,7 +50,7 @@ const updateInventoryItem = catchAsync(async (req, res, next) => {
 // @route   DELETE /api/inventory/:id
 // @access  Private
 const deleteInventoryItem = catchAsync(async (req, res, next) => {
-    const success = await inventoryService.deleteItem(req.params.id);
+    const success = await inventoryService.deleteItem(req.params.id, req.user.clinicName);
     
     if (!success) {
         return next(new AppError('Item not found', 404));
@@ -63,7 +63,7 @@ const deleteInventoryItem = catchAsync(async (req, res, next) => {
 // @route   POST /api/inventory/:id/transaction
 // @access  Private
 const addTransaction = catchAsync(async (req, res, next) => {
-    const item = await inventoryService.addTransaction(req.params.id, {
+    const item = await inventoryService.addTransaction(req.params.id, req.user.clinicName, {
         ...req.body,
         performedBy: req.user._id
     });
