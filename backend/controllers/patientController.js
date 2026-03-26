@@ -69,11 +69,21 @@ const getCommunicationLogs = catchAsync(async (req, res, next) => {
     sendResponse(res, 200, logs, 'Communication logs retrieved');
 });
 
+// @desc    Generate a Consent PDF
+// @route   POST /api/patients/:id/consent
+// @access  Private
+const generateConsent = catchAsync(async (req, res, next) => {
+    const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const result = await patientService.generateConsentPdf(req.params.id, req.user.clinicName, req.body, userIp);
+    sendResponse(res, 201, result, 'Consent form successfully generated');
+});
+
 module.exports = {
     getPatients,
     getPatient,
     createPatient,
     updatePatient,
     deletePatient,
-    getCommunicationLogs
+    getCommunicationLogs,
+    generateConsent
 };

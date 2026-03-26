@@ -135,6 +135,7 @@ class FinancialsService {
             transaction.invoiceStatus = invoiceData.status;
             transaction.invoiceId = invoiceData.invoiceId;
             transaction.invoiceDocumentUrl = invoiceData.documentUrl;
+            transaction.invoiceXmlUrl = invoiceData.xmlUrl;
             
             // To ensure mongoose trigger/hooks aren't bypassed, using save instead of direct repo generic update
             await transaction.save();

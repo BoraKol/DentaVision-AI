@@ -1,108 +1,133 @@
+const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
-const axios = require('axios');
+const puppeteer = require('puppeteer');
 const eInvoiceRepository = require('../repositories/EInvoiceRepository');
+const transactionRepository = require('../repositories/TransactionRepository');
+const generateHtml = require('../templates/invoiceTemplate');
+const generateXml = require('../templates/ublTemplate');
 
-/**
- * Service to communicate with E-Invoice Provider 
- * (e.g. Paraşüt, Uyumsoft, Logo, etc.)
- */
 class EInvoiceService {
     constructor() {
-        this.provider = process.env.EINVOICE_PROVIDER || 'Mock e-Fatura API';
-        this.apiKey = process.env.EINVOICE_API_KEY;
-        this.baseUrl = process.env.EINVOICE_API_URL || 'https://api.mock-einvoice-portal.com/v1';
+        this.outputDir = path.join(__dirname, '../uploads/invoices');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(this.outputDir)) {
+            fs.mkdirSync(this.outputDir, { recursive: true });
+        }
     }
 
     /**
-     * Builds a structured GIB-compliant E-SMM payload
+     * Builds data structure required by our HTML and XML templates
      */
-    buildInvoicePayload(transaction, patient) {
-        const kdvRate = 0.10; // 10% KDV for dental services
+    buildTemplateData(transaction, patient) {
+        const kdvRate = 0.10; // 10% VAT
         const amountExcludingKdv = transaction.amount / (1 + kdvRate);
         const kdvAmount = transaction.amount - amountExcludingKdv;
 
+        const dateObj = new Date(transaction.date || new Date());
+        const dateStr = dateObj.toLocaleDateString('tr-TR');
+        
+        const invoiceId = `ESMM${dateObj.getFullYear()}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
         return {
-            AliciBilgileri: {
-                TCKN: patient ? (patient.tcNo || '11111111111') : '11111111111',
-                Ad: patient ? patient.name.split(' ')[0] : 'Bilinmeyen',
-                Soyad: patient ? patient.name.split(' ').slice(1).join(' ') || 'Hasta' : 'Hasta',
-                Adres: patient ? patient.address || 'Belirtilmemiş' : 'Belirtilmemiş'
-            },
-            BelgeBilgileri: {
-                BelgeTuru: "E-SMM",
-                Tarih: new Date().toISOString().split('T')[0],
-                ParaBirimi: "TRY"
-            },
-            Hizmetler: [
+            invoiceId,
+            date: dateStr,
+            clinicName: transaction.clinicName || 'DentaVision Clinic',
+            patientName: patient ? patient.name : 'Misafir Hasta',
+            patientTc: patient ? patient.tcNo : '11111111111',
+            patientAddress: patient ? patient.address : 'Türkiye',
+            items: [
                 {
-                    Aciklama: transaction.description || transaction.category || "Diş Tedavi Hizmeti",
-                    Tutar: Number(amountExcludingKdv.toFixed(2)),
-                    KDVOrani: kdvRate * 100,
-                    KDVTutari: Number(kdvAmount.toFixed(2)),
-                    ToplamTutar: transaction.amount
+                    description: transaction.description || transaction.category || 'Diş Tedavi Hizmeti',
+                    kdvAmount,
+                    total: transaction.amount
                 }
             ],
-            ToplamTutar: transaction.amount
+            subTotal: amountExcludingKdv,
+            taxAmount: kdvAmount,
+            total: transaction.amount
         };
     }
 
     async generateInvoice(transaction, patient, user) {
-        console.log(`[E-INVOICE SERVICE] Generating invoice via ${this.provider}...`);
+        console.log(`[E-INVOICE SERVICE] Generating local invoice PDF/XML for transaction ${transaction._id}...`);
         
-        const payload = this.buildInvoicePayload(transaction, patient);
+        const tplData = this.buildTemplateData(transaction, patient);
 
         // Create initial pending log
         const logData = {
             transactionId: transaction._id,
             patientId: patient ? patient._id : undefined,
-            clinicName: transaction.clinicName,
+            clinicName: tplData.clinicName,
+            invoiceId: tplData.invoiceId,
             amount: transaction.amount,
-            requestPayload: { ...payload, AliciBilgileri: { TCKN: '***', Name: '***' } }, // Mask PII in log
+            requestPayload: { ...tplData, patientTc: '***' }, // Mask PII
             submittedBy: user._id,
             status: 'PENDING'
         };
         const invoiceLog = await eInvoiceRepository.create(logData);
 
         try {
-            let mockInvoiceId, mockPdfUrl, isSuccess;
+            // Generate HTML & XML strings
+            const htmlContent = generateHtml(tplData);
+            const xmlContent = generateXml(tplData);
 
-            if (!process.env.EINVOICE_API_KEY) {
-                // Simulate API network delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                mockInvoiceId = `ESMM-${new Date().getFullYear()}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-                mockPdfUrl = `https://mock-einvoice-portal.com/view/${mockInvoiceId}.pdf`;
-                isSuccess = Math.random() < 0.95; // 95% success
-            } else {
-                // Real Integrator Call
-                const response = await axios.post(`${this.baseUrl}/esmm/create`, payload, {
-                    headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' }
-                });
-                mockInvoiceId = response.data.invoiceId;
-                mockPdfUrl = response.data.pdfUrl;
-                isSuccess = true;
-            }
+            // File paths
+            const pdfFilename = `${tplData.invoiceId}.pdf`;
+            const xmlFilename = `${tplData.invoiceId}.xml`;
+            const pdfPath = path.join(this.outputDir, pdfFilename);
+            const xmlPath = path.join(this.outputDir, xmlFilename);
 
-            if (!isSuccess) {
-                throw new Error('E-Invoice provider API validation error');
-            }
+            // Generate PDF with Puppeteer
+            const browser = await puppeteer.launch({ 
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+            });
+            const page = await browser.newPage();
+            
+            // Set content and wait for networkidle
+            await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+            
+            await page.pdf({
+                path: pdfPath,
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '10px', bottom: '10px' }
+            });
 
-            console.log(`[E-INVOICE SERVICE] Success! Invoice ID: ${mockInvoiceId}`);
+            await browser.close();
+
+            // Save XML to disk
+            fs.writeFileSync(xmlPath, xmlContent, 'utf8');
+
+            // Public URLs assuming Express serves /uploads statically
+            const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3001}`;
+            const pdfUrl = `${baseUrl}/uploads/invoices/${pdfFilename}`;
+            const xmlUrl = `${baseUrl}/uploads/invoices/${xmlFilename}`;
+
+            console.log(`[E-INVOICE SERVICE] Success! Invoice generated at ${pdfUrl}`);
 
             // Update log securely
             await eInvoiceRepository.update({ _id: invoiceLog._id }, {
                 status: 'SUCCESS',
-                invoiceId: mockInvoiceId,
-                responsePayload: { documentUrl: mockPdfUrl, providerCode: '200_OK' }
+                responsePayload: { 
+                    pdfUrl, 
+                    xmlUrl,
+                    generatedDate: new Date()
+                }
             });
 
+            // Return full info
             return {
-                invoiceId: mockInvoiceId,
-                documentUrl: mockPdfUrl,
+                invoiceId: tplData.invoiceId,
+                documentUrl: pdfUrl,
+                xmlUrl: xmlUrl,
                 status: 'GENERATED'
             };
 
         } catch (error) {
-            console.error(`[E-INVOICE SERVICE] Error:`, error.message);
+            console.error(`[E-INVOICE SERVICE] Error generating PDF/XML:`, error.message);
             await eInvoiceRepository.update(
                 { _id: invoiceLog._id }, 
                 { status: 'ERROR', errorMessage: error.message }

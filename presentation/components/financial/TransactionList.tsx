@@ -11,6 +11,7 @@ interface Transaction {
     paymentMethod: string;
     invoiceStatus?: 'PENDING' | 'GENERATED' | 'FAILED';
     invoiceDocumentUrl?: string;
+    invoiceXmlUrl?: string;
     invoiceId?: string;
 }
 
@@ -18,10 +19,11 @@ interface ListProps {
     transactions: Transaction[];
     formatCurrency: (amount: number) => string;
     onDeleteClick: (id: string) => void;
+    onGenerateInvoice: (id: string) => void;
     language: string;
 }
 
-const TransactionList: React.FC<ListProps> = ({ transactions, formatCurrency, onDeleteClick, language }) => {
+const TransactionList: React.FC<ListProps> = ({ transactions, formatCurrency, onDeleteClick, onGenerateInvoice, language }) => {
 
     // Memoizing empty state row slightly optimizes re-renders when list is empty
     const EmptyState = useMemo(() => (
@@ -77,13 +79,23 @@ const TransactionList: React.FC<ListProps> = ({ transactions, formatCurrency, on
                                     <td className="px-6 py-4 text-center">
                                         {t.type === 'INCOME' ? (
                                             t.invoiceStatus === 'GENERATED' ? (
-                                                <a href={t.invoiceDocumentUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors" title={t.invoiceId}>
-                                                    <FileText className="w-3 h-3" /> E-Fatura
-                                                </a>
+                                                <div className="flex flex-col gap-1 items-center">
+                                                    <a href={t.invoiceDocumentUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors" title={t.invoiceId}>
+                                                        <FileText className="w-3 h-3" /> PDF Görüntüle
+                                                    </a>
+                                                    {t.invoiceXmlUrl && (
+                                                        <a href={t.invoiceXmlUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition-colors" title="UBL-TR XML İndir">
+                                                            <FileText className="w-3 h-3" /> XML İndir
+                                                        </a>
+                                                    )}
+                                                </div>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-                                                    Bekliyor
-                                                </span>
+                                                <button 
+                                                    onClick={() => onGenerateInvoice(t._id)}
+                                                    className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-1.5 rounded hover:bg-teal-100 transition-colors cursor-pointer font-medium"
+                                                >
+                                                    <FileText className="w-3 h-3" /> {language === 'tr' ? 'Fatura Kes' : 'Generate Invoice'}
+                                                </button>
                                             )
                                         ) : (
                                             <span className="text-slate-300">-</span>

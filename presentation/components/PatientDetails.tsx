@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Image as ImageIcon, FileText, Activity, Pill, Check, Clock, Wallet, Lock, Edit2, Save, X, MessageSquare } from 'lucide-react';
+import { ArrowLeft, User, Image as ImageIcon, FileText, Activity, Pill, Check, Clock, Wallet, Lock, Edit2, Save, X, MessageSquare, PenTool } from 'lucide-react';
 import PhotoGallery from './PhotoGallery';
 import { useLanguage } from '../context/LanguageContext';
 import { useTreatment } from '../context/TreatmentContext';
@@ -13,6 +13,7 @@ import PrescriptionList from './PrescriptionList';
 import PatientFinancials from './PatientFinancials';
 import PatientCommunicationLogs from './PatientCommunicationLogs';
 import PatientWhatsAppChat from './PatientWhatsAppChat';
+import ConsentFormSigner from './patients/ConsentFormSigner';
 
 const PatientDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ const PatientDetails: React.FC = () => {
 
     const [activeTab, setActiveTab] = useState<'info' | 'photos' | 'treatment' | 'recipes' | 'financial' | 'communication' | 'security'>('treatment');
     const [isEditing, setIsEditing] = useState(false);
+    const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
     const [editForm, setEditForm] = useState<any>(patient);
 
     const { t } = useLanguage();
@@ -86,9 +88,17 @@ const PatientDetails: React.FC = () => {
                         </p>
                     </div>
                 </div>
-                <span className="px-3 py-1 bg-teal-50 text-teal-700 text-sm font-medium rounded-full border border-teal-100">
-                    Aktif Hasta
-                </span>
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setIsConsentModalOpen(true)}
+                        className="px-4 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-sm font-medium rounded-lg border border-indigo-200 transition-colors flex items-center gap-1.5"
+                    >
+                        <PenTool className="w-4 h-4" /> Onam İmzalat
+                    </button>
+                    <span className="px-3 py-1 bg-teal-50 text-teal-700 text-sm font-medium rounded-full border border-teal-100">
+                        Aktif Hasta
+                    </span>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -387,6 +397,16 @@ const PatientDetails: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            <ConsentFormSigner
+                isOpen={isConsentModalOpen}
+                onClose={() => setIsConsentModalOpen(false)}
+                patientId={patient.id}
+                patientName={patient.name}
+                onSuccess={(url) => {
+                    // Update the context or UI if necessary
+                }}
+            />
         </div>
     );
 };

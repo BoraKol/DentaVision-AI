@@ -163,7 +163,7 @@ router.post('/book-appointment', protectPatient, async (req, res) => {
             time,
             procedure,
             notes: notes || 'Online randevu',
-            status: 'scheduled',
+            status: 'pending',
             duration: 30
         });
 

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const financialsController = require('../controllers/financialsController');
+const financialsService = require('../services/financialsService');
 const validate = require('../utils/validate');
 const { createTransactionSchema } = require('../validators/financialsValidator');
 

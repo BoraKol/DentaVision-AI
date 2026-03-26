@@ -7,7 +7,8 @@ const {
     createPatient,
     updatePatient,
     deletePatient,
-    getCommunicationLogs
+    getCommunicationLogs,
+    generateConsent
 } = require('../controllers/patientController');
 const { createPatientSchema, updatePatientSchema } = require('../validations/patientValidation');
 const validate = require('../middleware/validate');
@@ -24,5 +25,7 @@ router.delete('/:id', authorize('admin'), deletePatient);
 
 router.get('/:id/communication-logs', getCommunicationLogs);
 router.get('/:id/logs', getCommunicationLogs);
+
+router.post('/:id/consent', generateConsent);
 
 module.exports = router;

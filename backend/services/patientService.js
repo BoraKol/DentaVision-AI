@@ -1,5 +1,10 @@
 const patientRepository = require('../repositories/PatientRepository');
 const communicationLogRepository = require('../repositories/CommunicationLogRepository');
+const fs = require('fs');
+const path = require('path');
+const puppeteer = require('puppeteer');
+const generateConsentHtml = require('../templates/consentTemplate');
+const AppError = require('../utils/AppError');
 
 class PatientService {
     async getAllPatients(clinicName, skip = 0, limit = 0) {
@@ -39,6 +44,65 @@ class PatientService {
 
     async getPatientCommunicationLogs(patientId) {
         return await communicationLogRepository.findByPatientId(patientId);
+    }
+
+    async generateConsentPdf(patientId, clinicName, consentData, userIp) {
+        const patient = await patientRepository.findOne({ _id: patientId, clinicName });
+        if (!patient) throw new AppError('Hasta bulunamadı', 404);
+
+        const formType = consentData.formType || 'Aydınlatılmış Onam Formu';
+        const dateStr = new Date().toLocaleString('tr-TR');
+
+        // Prepare data for template
+        const tplData = {
+            patientName: patient.name,
+            patientTc: patient.tcNo,
+            formType,
+            content: consentData.content || 'Standart onam metni...',
+            signatureDataUrl: consentData.signatureDataUrl,
+            date: dateStr,
+            ipAddress: userIp,
+            clinicName
+        };
+
+        const htmlContent = generateConsentHtml(tplData);
+
+        // Define output directory and file
+        const outputDir = path.join(__dirname, '../uploads/consents');
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+        }
+
+        const filename = `CONSENT_${patient._id}_${Date.now()}.pdf`;
+        const pdfPath = path.join(outputDir, filename);
+
+        // Generate PDF
+        const browser = await puppeteer.launch({ 
+            headless: 'new',
+            args: ['--no-sandbox'] 
+        });
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        await page.pdf({
+            path: pdfPath,
+            format: 'A4',
+            printBackground: true
+        });
+        await browser.close();
+
+        // Save URL to patient documents
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3001}`;
+        const pdfUrl = `${baseUrl}/uploads/consents/${filename}`;
+
+        patient.documents = patient.documents || [];
+        patient.documents.push({
+            name: formType,
+            url: pdfUrl,
+            type: 'CONSENT_FORM'
+        });
+        await patient.save();
+
+        return { success: true, url: pdfUrl };
     }
 }
 

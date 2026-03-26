@@ -24,6 +24,7 @@ interface Transaction {
     paymentMethod: string;
     invoiceStatus?: 'PENDING' | 'GENERATED' | 'FAILED';
     invoiceDocumentUrl?: string;
+    invoiceXmlUrl?: string;
     invoiceId?: string;
 }
 
@@ -82,6 +83,18 @@ const FinancialDashboard: React.FC = () => {
             setIsDeleteModalOpen(false);
         } catch (err) {
             addToast('Silme başarısız', 'error');
+        }
+    };
+
+    const handleGenerateInvoice = async (id: string) => {
+        try {
+            await api.post(`/financials/transactions/${id}/invoice`);
+            addToast(language === 'tr' ? 'E-Fatura başarıyla oluşturuldu' : 'E-Invoice generated successfully', 'success');
+            fetchFinancialData();
+        } catch (err: any) {
+            console.error(err);
+            const msg = err.response?.data?.error || (language === 'tr' ? 'Fatura oluşturulamadı' : 'Failed to generate invoice');
+            addToast(msg, 'error');
         }
     };
 
@@ -251,6 +264,7 @@ const FinancialDashboard: React.FC = () => {
                 transactions={transactions}
                 formatCurrency={formatCurrency}
                 onDeleteClick={handleDeleteClick}
+                onGenerateInvoice={handleGenerateInvoice}
                 language={language}
             />
 
