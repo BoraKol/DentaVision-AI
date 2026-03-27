@@ -94,3 +94,26 @@ exports.deleteTransaction = catchAsync(async (req, res, next) => {
     
     res.status(200).json({ success: true, data: {} });
 });
+
+/**
+ * @desc    Get monthly trends and 3-month forecast
+ * @route   GET /api/financials/reports/trends
+ * @access  Private
+ */
+exports.getTrends = catchAsync(async (req, res, next) => {
+    const months = parseInt(req.query.months) || 12;
+    const data = await financialsService.getMonthlyTrends(req.user.clinicName, months);
+    
+    res.status(200).json({ success: true, data });
+});
+
+/**
+ * @desc    Get Clinic KPIs
+ * @route   GET /api/financials/reports/kpis
+ * @access  Private
+ */
+exports.getKPIs = catchAsync(async (req, res, next) => {
+    const kpis = await financialsService.getClinicKPIs(req.user.clinicName);
+    
+    res.status(200).json({ success: true, data: kpis });
+});

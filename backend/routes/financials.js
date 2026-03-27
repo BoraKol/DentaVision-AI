@@ -42,6 +42,16 @@ router.post('/transactions/:id/invoice', protect, async (req, res, next) => {
     }
 });
 
+// @desc    Get monthly trends & forecast
+// @route   GET /api/financials/reports/trends
+// @access  Private
+router.get('/reports/trends', protect, financialsController.getTrends);
+
+// @desc    Get Clinic KPIs
+// @route   GET /api/financials/reports/kpis
+// @access  Private
+router.get('/reports/kpis', protect, financialsController.getKPIs);
+
 // @desc    Delete transaction
 // @route   DELETE /api/financials/:id
 // @access  Private

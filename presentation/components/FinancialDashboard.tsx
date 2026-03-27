@@ -13,6 +13,7 @@ import DeleteConfirmationModal from './common/DeleteConfirmationModal';
 // Imported Sub-components
 import FinancialStatsCards from './financial/FinancialStatsCards';
 import TransactionList from './financial/TransactionList';
+import FinancialTrends from './financial/FinancialTrends';
 
 interface Transaction {
     _id: string;
@@ -33,7 +34,7 @@ const FinancialDashboard: React.FC = () => {
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
     const [doctorStats, setDoctorStats] = useState<any[]>([]);
     const [paymentStats, setPaymentStats] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'doctors' | 'payments'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'doctors' | 'payments' | 'trends'>('overview');
     const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -53,10 +54,10 @@ const FinancialDashboard: React.FC = () => {
                 api.get('/financials/reports/doctor-performance'),
                 api.get('/financials/reports/payment-methods')
             ]);
-            setTransactions(transRes.data.data || []);
-            setStats(statsRes.data.data || { income: 0, expense: 0, balance: 0 });
-            setDoctorStats(doctorRes.data.data || []);
-            setPaymentStats(paymentRes.data.data || []);
+            setTransactions(transRes.data || []);
+            setStats(statsRes.data || { income: 0, expense: 0, balance: 0 });
+            setDoctorStats(doctorRes.data || []);
+            setPaymentStats(paymentRes.data || []);
         } catch (err) {
             console.error(err);
             addToast('Veriler yüklenemedi', 'error');
@@ -149,6 +150,12 @@ const FinancialDashboard: React.FC = () => {
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'payments' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                     {language === 'tr' ? 'Ödeme Analizi' : 'Payment Analysis'}
+                </button>
+                <button
+                    onClick={() => setActiveTab('trends')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'trends' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    {language === 'tr' ? 'Trendler & Tahmin' : 'Trends & Forecast'}
                 </button>
             </div>
 
@@ -257,6 +264,11 @@ const FinancialDashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Trends & Forecast Tab */}
+            {activeTab === 'trends' && (
+                <FinancialTrends />
             )}
 
             {/* Transactions Table */}

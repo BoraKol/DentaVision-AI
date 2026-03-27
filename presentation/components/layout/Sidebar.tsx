@@ -14,6 +14,7 @@ import {
     Package,
     Stethoscope,
     ListTodo,
+    UserCheck,
     X
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
@@ -110,6 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed }) => {
                 ) : <div className="mt-6 border-t border-slate-100 mb-2"></div>}
                 <NavItem to="/financials" icon={PieChart} label={t('app.financial')} colorClass="text-amber-600" />
                 <NavItem to="/inventory" icon={Package} label={t('app.inventory')} colorClass="text-cyan-600" />
+                <NavItem to="/crm" icon={UserCheck} label="CRM & Recall" colorClass="text-violet-600" />
 
                 <div className="pt-4 mt-4 border-t border-slate-100">
                     <NavItem to="/tasks" icon={ListTodo} label={t('app.tasks')} colorClass="text-orange-600" />

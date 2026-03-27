@@ -1,11 +1,11 @@
 const Joi = require('joi');
 
 const createTransactionSchema = Joi.object({
-    type: Joi.string().valid('Income', 'Expense').required(),
+    type: Joi.string().valid('INCOME', 'EXPENSE').required(),
     amount: Joi.number().min(0).required(),
     category: Joi.string().required(),
     subCategory: Joi.string().allow('', null),
-    paymentMethod: Joi.string().valid('Cash', 'Credit Card', 'Bank Transfer', 'Other').required(),
+    paymentMethod: Joi.string().valid('CASH', 'CREDIT_CARD', 'INSURANCE', 'TRANSFER', 'BANK_TRANSFER').required(),
     description: Joi.string().allow('', null),
     date: Joi.date().iso().allow(null, ''),
     patientId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).allow(null, '').messages({

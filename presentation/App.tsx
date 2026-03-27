@@ -23,6 +23,7 @@ const PatientDashboard = React.lazy(() => import('./pages/portal/PatientDashboar
 const Inventory = React.lazy(() => import('./components/Inventory'));
 const LabTracking = React.lazy(() => import('./components/LabTracking'));
 const TaskBoard = React.lazy(() => import('./components/TaskBoard'));
+const CRMRecall = React.lazy(() => import('./components/CRMRecall'));
 
 const AppRouter: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -50,6 +51,7 @@ const AppRouter: React.FC = () => {
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/lab-tracking" element={<LabTracking />} />
                 <Route path="/tasks" element={<TaskBoard />} />
+                <Route path="/crm" element={<CRMRecall />} />
                 <Route path="/settings" element={<ProfileSettings />} />
             </Route>
 
